@@ -1,0 +1,6 @@
+tools/node_modules/
+.DS_Store
+# Keys never go in files (the OpenRouter key lives in the browser); ignore the usual places just in case.
+.env
+.env.*
+sessions/

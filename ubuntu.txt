@@ -1,0 +1,42 @@
+Breaking this talk down into it looks like three parts. I'm going to talk about gestures. I'm going to talk about app selection. And I'm going to talk about some small. Additional improvements, but obviously. Primary focus is on gestures. And the point I'm making is that iOS and Android have really standardized.
+On these two things. And so it is. Big source of confusion, for, for users to adopt Ubuntu touch if it is going to be so different. And.
+I have to. Admit that making such a big change is likely. Very much against the culture. And it's likely going to be very. Attractive so? I want to lay out what I'll call three possible. Has forward. The first one. Is to just move the gestures. Discoverable just? Take the trick that Apple uses and draw something on the screen that is there, or you're just going to see it, and they know it.
+Actually. Little step back.
+There really is only one gesture you have to learn with iOS and Android. There are additional ones, but those are secondary. So, the point is. You have to. Learn. Thrigia at least three gestures? Choose Ubuntu charge. You have to use at least.
+The right gesture appears to be frankly completely redundant. The right gesture is redundant and unnecessary, because everything it does the left shift to do. So, is that quite clear what the value? Settings is nice to have, but it is a secondary function.
+And so.
+It's, it's not.
+The issue that's going to touch is that it hits people over the head. With multiple gestures. There are four. All right, the tutorial teaches you for. So there. Now, of course, you really only need one. You're really only need. Which is the side gesture, but that's to how users see that they see it as the fact that you need multitats.
+Okay.
+So the minimal thing that I would suggest that you do? Is that? Had. Helper. Visual feedback, but there's actually a bar on the side. It is there it is drawn. It is always on the screen. Make it a setting so power users can get rid of it. Make it a setting so power users can so that expert users can turn it off.
+But for novices. That bar is always there. That, and it encourages that this is the one gesture that you have to learn. We give up on the fact that everybody else wants the bottom gestures. We keep the side gesture. But the other thing that we do is that we.
+Have the gesture, just be the home screen. Make it clear, here's the stuff. Here's how you launch.
+Okay, so. That's also what's important is that? The home screen is a menu. Andrew at iOS is an app. So? What? There are a lot of things about Android and iOS that are quite similar that are all quite different. The first one is that the home screen is an app.
+It's a place that you go to. You actually. When you're done with right, when you're done with? Your mail app. You go home, which effectively puts. You don't go home in.
+So?
+Ninja in iOS. Shockingly similar features. Swipe up from the bottom. Home is an amp, not a menu.
+Is a foundational difference.
+Yeah, I mean it. It works, right? I I have plucked, I plateaued.
+There. There's something interesting about how it plateaus I spent. Nine months. Turn between 207 and 200. And I would kind of go back and forth.
+I spent over six months basically hovering between 205 and 200. I didn't really change much.
+So, I'm thinking. I want to redo how I'm talking about this gesture interface. By breaking it down into pieces. First of all, I'm not going to call out IOS and Android separately. I'm just going to lay them on top of each other and say that there are both nearly identical in the sense.
+That they have. Gestures from the bottom. And settings from the top. And. What I'm struggling with right now is how to? Present this to. In the deck. You know? Coherent way by saying.
+There needs to be effectively like this headline feature, which is to say. Touch. There's two ways I'm saying that is that? Android and iOS. Are surprisingly identical in many important ways. They have two primary navigation gestures, settings, and home. Home is an app. Not a transient menu.
+And the third one, which is related to the first one, is both. Gestures are nearly. Aren't exactly the same place. And work much the same way. This is important because it implies that there is a certain. Query keyboard, like standard between Android and iOS, and this covers 99.99 of all the phones out there.
+So? There is this effectively established standard? At a deviate from that. Is just asking for users to have to learn something new, which is a hurdle. It is not a benefit. Let's take.
+And. Wondering if each of these needs like a subslide? To.
+App is home. App. I mean, that home is an app. The reason why that's so important is that it provides a. Very clear place to start. It provides a default place to take the user. It's a comfortable starting point.
+And. Provides a way to quit an app by going home. You're effectively quitting.
+With Ubuntu touch. Home is a menu item. And not only that, it is a secondary menu item. The primary menu item is the switcher. So, to go to your home app, you actually have to slide out and tap this icon. Or you can slide hoates. But that is a secondary behavior secondary gephector that not all users are going to learn.
+It's a subtlety, but? The point I'm trying to say is. With one simple gesture flip. You go home! You? And you go to a place where all your applications are. It's not the most efficient place, but it's a very stable, consistent place. Leave where you are and go home, and you do that with a single slick.
+And I've only touch a single flip, takes you to the quick launcher. Which has no icons. No icons, so you're looking at an unfamiliar list of icons?
+Your icons! With no labels. Once you learn the advanced gesture to pull out, then you get a better list. But. It's the secondary gesture. It's that extra pull away.
+Maybe the other thing I want to do is to say.
+Design philosophy of Ubuntu touch. Is really. To make Advanced. Linux programmers happy? It is all about efficiency. It's about quickly changing. It's about minimal movement. And it does that well? But it's important to understand that is its Target audience. It's targeted audience. Is Linux programmers? Why else would you include terminal as a default app on your home screen?
+The target audience needs to change, especially if we want to get larger.
+It is not. It is not your place to discuss. I did not ask to this conversation. We do not need it to conversation.
+Don't. Don't have this conversation? I'm not asking for it, and we don't need it.
+So? What? Considering? Is the fact that? We need. Highlight.
+How similar IOS and Android are? And. How the model? It's actually there's really two parts to this. There's the gestures of which there are just two primary ones settings and. And home. But there's the behaviors which is at home is an app. That. Is not only. Let's stable. Place with labels to make things really clear.
+But it's also it quit gesture.
+Doesn't. It is. Kind of a leave gesture. You're exiting the app. It's still there in the background for us, but.

@@ -1,0 +1,10 @@
+{
+  "name": "mirror-tools",
+  "private": true,
+  "type": "module",
+  "description": "Headless tests and analysis for the Mirror pages. Not part of the app (the pages have no build step).",
+  "dependencies": {
+    "@huggingface/transformers": "3.7.6",
+    "jsdom": "24.1.3"
+  }
+}

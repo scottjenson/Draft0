@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mirror</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Mirror: talk, and the main points of what you've said build up live.
+   Pipeline per utterance: P1 clean/split (Nano) → embed + group (code) → label changed groups (Nano)
+   → place new groups into main points (Nano, existing placements frozen) → distil changed main points (Nano). */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --ink: #17202b; --muted: #5d6877; --line: #dde2e9;
+  --accent: #2c4fd6; --accent-ink: #ffffff; --rec: #d33a2c; --ok: #1f8a4c; --warn: #b26a00; --chip: #eaeefb;
+  --fresh: rgba(44, 79, 214, 0.14);
+  --font-display: "Literata", Georgia, serif;
+  --font-body: "Public Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151b; --surface: #1a2029; --ink: #e7ebf1; --muted: #9aa5b4; --line: #2b3440;
+    --accent: #7e9bff; --accent-ink: #0d1220; --rec: #ff6a5c; --ok: #4cc782; --warn: #f0a742; --chip: #232c3d;
+    --fresh: rgba(126, 155, 255, 0.16);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151b; --surface: #1a2029; --ink: #e7ebf1; --muted: #9aa5b4; --line: #2b3440;
+  --accent: #7e9bff; --accent-ink: #0d1220; --rec: #ff6a5c; --ok: #4cc782; --warn: #f0a742; --chip: #232c3d;
+  --fresh: rgba(126, 155, 255, 0.16);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding: 20px 16px 48px; }
+.wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+h1 { font: 600 1.5rem/1.2 var(--font-display); margin: 0 8px 0 0; }
+.spacer { flex: 1; }
+.meta { font: 400 0.78rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.pill { font: 500 0.72rem/1 var(--font-mono); padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); }
+.pill.ok { color: var(--ok); } .pill.bad { color: var(--rec); } .pill.warn { color: var(--warn); }
+button, select { font: 600 0.86rem/1 var(--font-body); border-radius: 8px; padding: 8px 12px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+select { font-weight: 500; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+#talk { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); min-width: 120px; padding: 11px 18px; font-size: 0.95rem; display: inline-flex; gap: 8px; align-items: center; justify-content: center; }
+#talk.on { background: var(--rec); border-color: var(--rec); color: #fff; }
+#talk .dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+#talk.on .dot { animation: pulse 1.1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { #talk.on .dot { animation: none; } }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+.bar label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.84rem; color: var(--muted); }
+input[type=text] { font: 400 0.86rem var(--font-body); padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); min-width: 0; }
+#topic { flex: 1; min-width: 200px; }
+.status { font-size: 0.85rem; color: var(--muted); min-height: 1.3em; }
+.status.err { color: var(--rec); }
+.framed { border: 1px solid var(--warn); background: var(--surface); border-radius: var(--radius); padding: 10px 12px; font-size: 0.88rem; }
+
+/* main view */
+.mains { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.main { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px 10px 52px; position: relative; }
+.main .num { position: absolute; left: 14px; top: 13px; width: 26px; height: 26px; border-radius: 50%; background: var(--chip); font: 600 0.85rem/26px var(--font-body); text-align: center; color: var(--ink); }
+.main h2 { font: 600 1.12rem/1.3 var(--font-display); margin: 0 0 4px; }
+.main p { font: 400 1rem/1.6 var(--font-display); margin: 0 0 6px; max-width: 70ch; }
+.main.pending h2, .main.pending p { color: var(--muted); }
+.main.fresh { animation: fresh 6s ease-out both; }
+@keyframes fresh { from { background: var(--fresh); border-color: var(--accent); } to { background: var(--surface); border-color: var(--line); } }
+@media (prefers-reduced-motion: reduce) { .main.fresh { animation: none; border-color: var(--accent); } }
+details > summary { cursor: pointer; font-size: 0.8rem; color: var(--muted); }
+.ideas { margin: 6px 0 4px; padding-left: 1.1em; font-size: 0.9rem; }
+.ideas > li { margin: 4px 0; }
+.ideas .stmts { margin: 2px 0 6px; padding-left: 1.2em; color: var(--muted); font-size: 0.85rem; }
+.empty { color: var(--muted); font-style: italic; padding: 24px 4px; text-align: center; }
+.side { color: var(--muted); font-size: 0.88rem; }
+.side ul { margin: 4px 0; padding-left: 1.2em; }
+
+/* debug */
+.debug { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+.debug > summary { font: 600 0.72rem/1.4 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; }
+.dbg-grid { display: grid; gap: 12px; margin-top: 10px; }
+.dbg-head { font: 600 0.7rem var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.transcript, .log { max-height: 320px; overflow: auto; font-size: 0.85rem; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--bg); }
+.transcript .utt { margin: 0 0 8px; }
+.transcript .utt .meta { margin-right: 6px; }
+.transcript .stmts { margin: 2px 0 0; padding-left: 1.2em; color: var(--muted); font-size: 0.8rem; }
+.interim { color: var(--muted); font-style: italic; }
+.log details summary { font: 400 0.76rem/1.5 var(--font-mono); color: var(--ink); }
+.log details summary.bad { color: var(--rec); }
+.log pre { margin: 4px 0 8px; padding: 8px; background: var(--surface); border-radius: 6px; font: 400 0.72rem/1.45 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Mirror</h1>
+    <span class="pill" id="pill-speech">Speech</span>
+    <span class="pill" id="pill-nano">Nano</span>
+    <span class="pill" id="pill-embed">Embeddings: load on first use</span>
+    <span class="spacer"></span>
+    <span class="meta" id="saved"></span>
+  </header>
+
+  <div class="framed" id="framed" hidden>This page is inside a frame, so Chrome blocks the microphone and Gemini Nano. Open it directly: run <code>python3 -m http.server</code> in its folder and visit <code>http://localhost:8000/mirror.html</code>.</div>
+
+  <div class="bar">
+    <button id="talk" type="button"><span class="dot"></span><span id="talk-label">Talk</span></button>
+    <span class="meta" id="timer">0:00</span>
+    <input type="text" id="topic" placeholder="Topic (optional) — helps fix misheard names and terms">
+    <label for="local"><input type="checkbox" id="local"> On-device speech</label>
+  </div>
+
+  <div class="bar">
+    <input type="file" id="replay-file" accept=".txt,.json,text/plain,application/json" hidden>
+    <button id="replay" type="button">Replay file…</button>
+    <label for="speed">Speed
+      <select id="speed">
+        <option value="1">1× (speaking pace)</option>
+        <option value="4" selected>4×</option>
+        <option value="max">As fast as Nano keeps up</option>
+      </select>
+    </label>
+    <button id="stop-replay" type="button" hidden>Stop replay</button>
+    <span class="spacer"></span>
+    <button id="folder" type="button" title="Pick a folder; sessions are then saved there automatically">Save sessions to folder…</button>
+    <button id="download" type="button">Download session</button>
+    <button id="new" type="button">New session</button>
+  </div>
+
+  <div class="status" id="status" role="status"></div>
+
+  <main id="view"><div class="empty">Press Talk and start thinking out loud. Your main points will appear here.</div></main>
+
+  <details class="debug" id="debug">
+    <summary>Debug: transcript, queue and Nano calls</summary>
+    <div class="dbg-grid">
+      <div class="meta" id="queue"></div>
+      <div><div class="dbg-head">Transcript</div><div class="transcript" id="transcript"></div></div>
+      <div><div class="dbg-head">Calls</div><div class="log" id="log"></div></div>
+    </div>
+  </details>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    talk: $('talk'), talkLabel: $('talk-label'), timer: $('timer'), topic: $('topic'), local: $('local'),
+    replay: $('replay'), replayFile: $('replay-file'), speed: $('speed'), stopReplay: $('stop-replay'),
+    folder: $('folder'), download: $('download'), newBtn: $('new'), saved: $('saved'), status: $('status'),
+    view: $('view'), queue: $('queue'), transcript: $('transcript'), log: $('log'), debug: $('debug'),
+    pillSpeech: $('pill-speech'), pillNano: $('pill-nano'), pillEmbed: $('pill-embed'),
+  };
+
+  // ---------- tuning (values come from the test bench; see docs/LEARNINGS.md) ----------
+  const GROUP_T = 0.5;        // statement joins a group at this cosine similarity
+  const SPLIT_MAX = 10;       // groups bigger than this are re-split at a stricter threshold
+  const MAX_MAINS = 8;        // cap on main points Nano may create; points the speaker names don't count
+  const OTHER_TOPIC_PENALTY = 0.15; // once the speaker names a topic, material from other topics must be this much more similar
+  const PAUSE_MS = 1600;      // silence that ends an utterance
+  const MAX_UTT_WORDS = 70;   // force an utterance break in long runs without pauses
+  const CALL_TIMEOUT_MS = 45000;
+  const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6';
+  const EMBED_MODEL = 'Xenova/all-MiniLM-L6-v2';
+  const LM_OPTS = { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] };
+
+  const PROMPTS = {
+    clean: `You clean up speech-recognition text. You get one short passage someone spoke while thinking out loud, plus the passage before it as context only. Never rewrite or repeat the context passage.
+
+Rewrite the passage as a list of short, standalone statements, one idea each.
+- Only rewrite what the speaker said. Never add introductions, headings, or summaries.
+- Fix obvious transcription errors (sound-alike words that make no sense). Use the topic, if given, to fix misheard names and terms.
+- Remove filler: um, so, okay, you know, false starts, repeated words.
+- Replace "this", "that", "it" with what they refer to, when it is clear.
+- Keep the speaker's meaning. Do not add ideas.
+- Keep change-of-mind phrases ("actually", "on second thought", "scratch that", "what I'm trying to say") at the start of the statement they apply to. Never add one the speaker did not say.
+- Keep phrases that announce structure, such as "the first topic is" or "the final point is", at the start of their statement.
+- If the passage is only filler, return an empty list.
+
+For each statement also give its role:
+- "new-topic": the speaker explicitly moves on to a new subject or announces one, in any wording ("moving on to…", "the next thing I want to get into is…", "my second idea is…", "switching gears…"). Give its title: the subject in 2 to 6 words. Do not use new-topic for a statement that merely sounds important, or that only refers back to an earlier topic.
+- "framing": the speaker talks about the session itself rather than its subject: what they plan to cover, how they will organize it, what they will come back to.
+- "content": everything else.
+title is "" unless role is "new-topic".`,
+
+    label: `You summarize one group of related statements from someone thinking out loud. The statements are listed in the order they were said. When the speaker changes their mind, later statements override earlier ones.
+
+Return:
+- label: the idea in 3 to 8 words
+- summary: one sentence giving what the speaker said about it, in their terms
+- kind: "point" if it is part of what they are thinking through; "framing" if the speaker is talking about the session itself rather than its subject (what they plan to cover, how they will organize it, what they will come back to); "aside" if it is off-topic or said to someone else
+
+Rules:
+- Use only what the statements say. Do not add ideas, decisions, or people.
+- If the speaker describes someone else's position, say whose it is; do not present it as the speaker's own view.
+- If the statements are unrelated to the topic, kind is "aside". Do not reinterpret them to fit the topic.`,
+
+    place: `You sort someone's spoken thinking into a few main points. You get the titles of the current main points and one new idea.
+Answer with the id of the main point the new idea belongs to.
+Answer "new" only if the idea is about a clearly different subject from every main point, and then give a title of 2 to 6 words. Otherwise title is "".`,
+
+    distill: `You distil one main point from someone's spoken thinking. You get the ideas that belong to it, with how many statements the speaker made about each.
+
+Return:
+- title: 2 to 6 words
+- text: one or two plain sentences stating what the speaker said about this point, in their own terms
+
+Reflect only what was said. Do not add opinions, advice, or new ideas. Give more weight to ideas with more statements. When the speaker changed their mind, give their latest position.`,
+  };
+
+  const SCHEMA = {
+    clean: { type: 'object', required: ['statements'], properties: { statements: { type: 'array', maxItems: 6, items: {
+      type: 'object', required: ['text', 'role', 'title'], properties: {
+        text: { type: 'string' }, role: { enum: ['content', 'new-topic', 'framing'] }, title: { type: 'string' } } } } } },
+    label: { type: 'object', required: ['label', 'summary', 'kind'], properties: { label: { type: 'string' }, summary: { type: 'string' }, kind: { enum: ['point', 'framing', 'aside'] } } },
+    place: (ids) => ({ type: 'object', required: ['main', 'title'], properties: { main: { enum: ids }, title: { type: 'string' } } }),
+    distill: { type: 'object', required: ['title', 'text'], properties: { title: { type: 'string' }, text: { type: 'string' } } },
+  };
+
+  // ---------- helpers ----------
+  const words = (t) => (t.trim().match(/\S+/g) || []).length;
+  const secs = (ms) => `${(ms / 1000).toFixed(1)}s`;
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const clip = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+  const fmtTime = (ms) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  const setStatus = (msg, err = false) => { els.status.textContent = msg; els.status.classList.toggle('err', err); };
+  const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const dot = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
+  const unit = (v) => { const n = Math.hypot(...v) || 1; return v.map((x) => x / n); };
+  // Word-set overlap; catches the clean pass echoing the previous utterance.
+  const similarWords = (a, b) => {
+    const ws = (s) => new Set(s.toLowerCase().match(/[\p{L}\p{N}]+/gu) || []);
+    const A = ws(a), B = ws(b);
+    const inter = [...A].filter((w) => B.has(w)).length;
+    return inter / (A.size + B.size - inter || 1) >= 0.5;
+  };
+
+  // ---------- spoken structure ----------
+  // P1 (Nano) tags statements that announce a new topic, in any wording. This regex is only a backstop for the
+  // plain forms ("the first topic is…", "topic three:"); sessions record which one fired (detectedBy) so it can go
+  // once Nano proves reliable. Either way, code then starts the main point; no further Nano judgment.
+  const MARKER_RE = new RegExp('^(?:(?:and|so|okay|ok|now|um|uh|then|well|alright),?\\s+)*(?:(?:the|my|a|our)\\s+)?'
+    + '(?:(?:first|second|third|fourth|fifth|sixth|seventh|next|final|last|another|new)\\s+(?:main\\s+|big\\s+)?(?:topic|idea|point|thing|part|section|theme)'
+    + '|(?:topic|point|part|idea)\\s+(?:one|two|three|four|five|six|seven|\\d))\\b'
+    + '(?=\\s*[:,]|\\s*$|\\s+(?:is|will|would|(?:that\\s+)?i\\s+(?:want|would|have|plan))\\b)' // "another point OF confusion" is content, not structure
+    + '(?:\\s+(?:that\\s+)?i\\s+(?:want|would like|have|plan)(?:\\s+to\\s+(?:talk about|discuss|cover))?)?'
+    + '(?:\\s+(?:is|will be|would be))?(?:\\s+(?:about|that))?[:,]?\\s*', 'i');
+  function parseMarker(text) {
+    const m = text.match(MARKER_RE);
+    if (!m) return null;
+    return { rest: text.slice(m[0].length).replace(/[.!?]+$/, '').trim() };
+  }
+  const asTitle = (t) => { const w = t.split(/\s+/); const s = w.slice(0, 8).join(' ') + (w.length > 8 ? '…' : ''); return s.charAt(0).toUpperCase() + s.slice(1); };
+
+  // =====================================================================
+  // Session state. Code owns all structure; Nano only fills in text and makes small choices.
+  // =====================================================================
+  let S = null;
+  function newSession(source = 'live') {
+    S = { id: new Date().toISOString(), source, topic: els.topic.value.trim(), startedAt: Date.now(),
+      utterances: [], statements: [], groups: [], mains: [], calls: [], nextGroup: 1, nextMain: 1, currentMain: null, awaitTitle: null };
+    queue.clean.length = 0;
+    els.log.innerHTML = '';
+    rev = 0; savedRev = 0;
+    render();
+  }
+  const queue = { clean: [] };
+  const mainOf = (g) => S.mains.find((m) => m.id === g.mainId);
+  const groupsOf = (m) => S.groups.filter((g) => g.mainId === m.id && g.kind === 'point');
+  const topicLine = () => (S.topic ? `Topic: ${S.topic}\n\n` : '');
+
+  // ---------- Nano ----------
+  const bases = {};
+  async function sessionFor(task) {
+    if (!bases[task]) bases[task] = await LanguageModel.create({ ...LM_OPTS, initialPrompts: [{ role: 'system', content: PROMPTS[task] }] });
+    return bases[task].clone ? bases[task].clone() : LanguageModel.create({ ...LM_OPTS, initialPrompts: [{ role: 'system', content: PROMPTS[task] }] });
+  }
+  async function callJSON(task, label, user, schema) {
+    const rec = { task, label, user, raw: null, ms: 0, error: null, at: Date.now() - S.startedAt };
+    const sid = S.id;
+    const t0 = performance.now();
+    let s, parsed = null;
+    try {
+      s = await sessionFor(task);
+      rec.raw = await s.prompt(user, { responseConstraint: schema, signal: AbortSignal.timeout(CALL_TIMEOUT_MS) });
+      parsed = JSON.parse(rec.raw);
+    } catch (e) {
+      rec.error = `${e.name}: ${e.message}`;
+      if (e.name !== 'TimeoutError' && !rec.raw) { bases[task]?.destroy?.(); delete bases[task]; } // recreate on odd failures
+    } finally { s?.destroy?.(); }
+    rec.ms = performance.now() - t0;
+    if (S.id !== sid) return { stale: true };
+    S.calls.push(rec);
+    logCall(rec);
+    return { parsed };
+  }
+
+  // ---------- embeddings ----------
+  let extractor = null;
+  async function embed(texts) {
+    if (!extractor) {
+      els.pillEmbed.textContent = 'Embeddings: loading…'; els.pillEmbed.className = 'pill warn';
+      const { pipeline } = await import(TRANSFORMERS_URL);
+      extractor = await pipeline('feature-extraction', EMBED_MODEL, {
+        dtype: 'q8',
+        progress_callback: (p) => { if (p.status === 'progress' && /\.onnx$/.test(p.file || '')) els.pillEmbed.textContent = `Embeddings: ${Math.round(p.progress)}%`; },
+      });
+      els.pillEmbed.textContent = 'Embeddings: ready'; els.pillEmbed.className = 'pill ok';
+    }
+    return (await extractor(texts, { pooling: 'mean', normalize: true })).tolist();
+  }
+
+  function declareMain(s, rest, by) {
+    const m = { id: `m${S.nextMain++}`, n: S.mains.length + 1, title: rest ? asTitle(rest) : `Topic ${S.mains.length + 1}`,
+      text: '', declared: true, dirty: false, freshAt: Date.now() };
+    S.mains.push(m);
+    S.currentMain = m.id;
+    if (!rest) S.awaitTitle = m.id; // "The third topic is…" with the subject in the next statement
+    const g = newGroup([s.idx], m.id);
+    Object.assign(g, { kind: 'point', label: m.title, declared: true });
+    S.groups.push(g);
+    m.detectedBy = by;
+    log(`you named point ${m.n}: ${m.title} (detected by ${by})`);
+  }
+
+  // ---------- grouping (code) ----------
+  function newGroup(memberIdxs, mainId = null) {
+    const sum = memberIdxs.reduce((acc, m) => acc.map((v, i) => v + S.statements[m].emb[i]), new Array(S.statements[memberIdxs[0]].emb.length).fill(0));
+    return { id: `g${S.nextGroup++}`, members: [...memberIdxs], sum, centroid: unit(sum), label: '', summary: '', kind: null, labelledSize: 0, mainId };
+  }
+  function assignStatement(s) {
+    let best = null, bestSim = -1;
+    for (const g of S.groups) {
+      if (g.kind === 'framing') continue;
+      let sim = dot(g.centroid, s.emb);
+      if (S.currentMain && g.mainId && g.mainId !== S.currentMain) sim -= OTHER_TOPIC_PENALTY;
+      if (sim > bestSim) { bestSim = sim; best = g; }
+    }
+    if (best && bestSim >= GROUP_T) {
+      best.members.push(s.idx);
+      best.sum = best.sum.map((v, i) => v + s.emb[i]);
+      best.centroid = unit(best.sum);
+      if (best.members.length > SPLIT_MAX) splitGroup(best, GROUP_T + 0.1);
+      return;
+    }
+    S.groups.push(newGroup([s.idx]));
+  }
+  // Centroids drift into catch-all groups; re-split oversized ones. Sub-groups keep their main point.
+  function splitGroup(g, threshold) {
+    const subs = [];
+    for (const m of g.members) {
+      const e = S.statements[m].emb;
+      let best = null, bestSim = -1;
+      for (const sg of subs) { const sim = dot(unit(sg.sum), e); if (sim > bestSim) { bestSim = sim; best = sg; } }
+      if (best && bestSim >= threshold) { best.members.push(m); best.sum = best.sum.map((v, i) => v + e[i]); }
+      else subs.push({ members: [m], sum: [...e] });
+    }
+    if (subs.length < 2) return; // couldn't split; leave it
+    const replacement = subs.map((sg) => Object.assign(newGroup(sg.members, g.mainId), g.declared ? { kind: 'point', declared: true, label: g.label } : {}));
+    S.groups.splice(S.groups.indexOf(g), 1, ...replacement);
+    for (const r of replacement) if (r.members.length > SPLIT_MAX && threshold < 0.9) splitGroup(r, threshold + 0.1);
+    log(`split ${g.id} (${g.members.length}) → ${replacement.map((r) => `${r.id}(${r.members.length})`).join(', ')}`);
+  }
+  // Relabel often while a group is small, then only every couple of new statements.
+  const needsLabel = (g) => g.members.length > 1 && (g.labelledSize === 0
+    || (g.members.length <= 4 && g.members.length !== g.labelledSize) || g.members.length >= g.labelledSize + 2);
+
+  // =====================================================================
+  // Work queue: one Nano call at a time. Cleaning is never skipped; everything downstream
+  // works from current state, so repeated changes to the same group/point collapse into one call.
+  // =====================================================================
+  let working = false;
+  let current = '';
+  function kick() { if (!working) work(); }
+  async function work() {
+    working = true;
+    try {
+      for (let task = nextTask(); task; task = nextTask()) { await task(); dirty(); scheduleRender(); }
+    } catch (e) { setStatus(`Pipeline error: ${e.message}`, true); console.error(e); }
+    finally {
+      working = false; current = '';
+      if (/catching up/.test(els.status.textContent)) setStatus('Done.');
+      scheduleRender(); scheduleSave();
+    }
+  }
+  function nextTask() {
+    if (queue.clean.length) { const i = queue.clean.shift(); return () => cleanUtterance(i); }
+    const g = S.groups.find(needsLabel);
+    if (g) return () => labelGroup(g);
+    const u = S.groups.find((x) => x.kind === 'point' && !x.mainId);
+    if (u) return () => placeGroup(u);
+    const m = S.mains.find((x) => x.dirty);
+    if (m) return () => distillMain(m);
+    return null;
+  }
+
+  async function cleanUtterance(i) {
+    const u = S.utterances[i];
+    current = `cleaning utterance ${i + 1}`; scheduleRender();
+    const prev = S.utterances[i - 1];
+    const { parsed, stale } = await callJSON('clean', `utt ${i + 1}`,
+      `${topicLine()}Context only, do not rewrite: "${prev ? prev.text : '(none)'}"\n\nPassage to rewrite: "${u.text}"`, SCHEMA.clean);
+    if (stale) return;
+    let items = (parsed?.statements || []).map((x) => ({ text: (x.text || '').trim(), role: x.role || 'content', title: (x.title || '').trim() })).filter((x) => x.text);
+    if (!parsed) { items = u.text.split(/(?<=[.!?])\s+/).map((t) => ({ text: t.trim(), role: 'content', title: '' })).filter((x) => x.text); log(`utt ${i + 1}: clean failed, using raw sentences`); }
+    u.raw = items.map((x) => x.text);
+    const prevRaw = prev?.raw || [];
+    const keptItems = items.filter((x) => (words(x.text) >= 3 || x.role === 'new-topic') && !prevRaw.some((p) => similarWords(p, x.text)));
+    const kept = keptItems.map((x) => x.text);
+    u.statements = [];
+    if (!kept.length) return;
+    current = `grouping utterance ${i + 1}`; scheduleRender();
+    const sid = S.id;
+    // A new topic is Nano's call (any wording) or the regex backstop's (plain forms).
+    const topics = keptItems.map((x) => {
+      const rx = parseMarker(x.text);
+      if (x.role !== 'new-topic' && !rx) return null;
+      return { title: x.title || rx?.rest || '', by: x.role === 'new-topic' ? (rx ? 'both' : 'nano') : 'regex' };
+    });
+    // "The first idea is X" and "the final topic is Y" look alike to embeddings; compare the subjects only.
+    const embs = await embed(kept.map((t, j) => topics[j]?.title || t));
+    if (S.id !== sid) return; // session was reset while embedding
+    kept.forEach((text, j) => {
+      const s = { idx: S.statements.length, text, utt: i, emb: embs[j] };
+      S.statements.push(s);
+      u.statements.push(s.idx);
+      s.role = keptItems[j].role;
+      if (topics[j]) { s.detectedBy = topics[j].by; declareMain(s, topics[j].title, topics[j].by); s.topic = S.currentMain; return; }
+      if (s.role === 'framing') { // about the session itself: set aside, and never a magnet for content
+        S.groups.push(Object.assign(newGroup([s.idx]), { kind: 'framing', label: s.text, summary: '' }));
+        return;
+      }
+      s.topic = S.currentMain; // placement runs later, so remember which named topic was current when this was said
+      const waiting = S.awaitTitle && S.mains.find((m) => m.id === S.awaitTitle);
+      if (waiting) { waiting.title = asTitle(text.replace(/[.!?]+$/, '')); S.awaitTitle = null; }
+      assignStatement(s);
+    });
+  }
+
+  async function labelGroup(g) {
+    const n = g.members.length;
+    current = `labelling ${g.id}`; scheduleRender();
+    const { parsed, stale } = await callJSON('label', `${g.id} (${n})`,
+      `${topicLine()}Statements, in the order they were said:\n${g.members.map((m, k) => `${k + 1}. ${S.statements[m].text}`).join('\n')}`, SCHEMA.label);
+    if (stale || !S.groups.includes(g)) return; // split while we waited
+    g.labelledSize = n;
+    g.label = parsed?.label?.trim() || clip(S.statements[g.members[0]].text, 60);
+    g.summary = parsed?.summary?.trim() || '';
+    g.kind = g.declared ? 'point' : ['framing', 'aside'].includes(parsed?.kind) ? parsed.kind : 'point';
+    const m = mainOf(g);
+    if (m) { if (g.kind !== 'point') g.mainId = null; m.dirty = true; }
+  }
+
+  async function placeGroup(g) {
+    if (!S.mains.length) { createMain(g); return; }
+    const spokenIn = topicWhenSpoken(g);
+    if (spokenIn) { // said under a topic the speaker named: it belongs there. (A "clearly closer" override lost to
+      const target = S.mains.find((m) => m.id === spokenIn); // points with more content and misfiled whole topics.)
+      g.mainId = target.id;
+      target.dirty = true;
+      return;
+    }
+    current = `placing ${g.id}`; scheduleRender();
+    const ids = S.mains.map((m) => m.id);
+    const canAdd = S.mains.filter((m) => !m.declared).length < MAX_MAINS;
+    // Titles only: full texts grow to cover everything and turn the first point into a catch-all.
+    const { parsed, stale } = await callJSON('place', g.id,
+      `Main points:\n${S.mains.map((m) => `${m.id}: ${m.title}`).join('\n')}\n\nNew idea: ${g.label} — ${g.summary}`,
+      SCHEMA.place(canAdd ? [...ids, 'new'] : ids));
+    if (stale || !S.groups.includes(g) || g.mainId) return;
+    if (parsed?.main === 'new' && canAdd) { createMain(g, parsed.title); return; }
+    let target = S.mains.find((m) => m.id === parsed?.main);
+    if (!target) target = nearestMain(g).main; // Nano failed: fall back to embeddings
+    g.mainId = target.id;
+    target.dirty = true;
+  }
+  function createMain(g, title) {
+    const m = { id: `m${S.nextMain++}`, n: S.mains.length + 1, title: title?.trim() || g.label, text: g.summary, dirty: false, freshAt: Date.now() };
+    S.mains.push(m);
+    g.mainId = m.id;
+  }
+  // The named topic most of a group's statements were spoken under (null if none).
+  function topicWhenSpoken(g) {
+    const n = {};
+    for (const m of g.members) { const t = S.statements[m].topic; if (t) n[t] = (n[t] || 0) + 1; }
+    const best = Object.entries(n).sort((a, b) => b[1] - a[1])[0];
+    return best && S.mains.some((m) => m.id === best[0]) ? best[0] : null;
+  }
+  function mainSim(m, g) {
+    const gs = S.groups.filter((x) => x.mainId === m.id && x !== g);
+    if (!gs.length) return -2;
+    return dot(unit(gs.reduce((acc, x) => acc.map((v, i) => v + x.centroid[i]), new Array(g.centroid.length).fill(0))), g.centroid);
+  }
+  function nearestMain(g) {
+    let main = S.mains[0], sim = -2;
+    for (const m of S.mains) { const x = mainSim(m, g); if (x > sim) { sim = x; main = m; } }
+    return { main, sim };
+  }
+
+  async function distillMain(m) {
+    m.dirty = false; // changes that arrive while we wait re-flag it
+    const gs = groupsOf(m);
+    if (!gs.length) return;
+    if (gs.length === 1) { // one idea: its own summary is the distillation, no call needed
+      const title = m.declared ? m.title : gs[0].label;
+      if (m.title !== title || m.text !== gs[0].summary) { m.title = title; m.text = gs[0].summary; m.freshAt = Date.now(); }
+      return;
+    }
+    current = `distilling point ${m.n}`; scheduleRender();
+    const { parsed, stale } = await callJSON('distill', `point ${m.n}`,
+      `${topicLine()}${m.declared ? `The speaker named this point: ${m.title}\n\n` : ''}Ideas:\n${gs.sort((a, b) => b.members.length - a.members.length).map((g) => `- (${g.members.length}) ${g.label} — ${g.summary}`).join('\n')}`, SCHEMA.distill);
+    if (stale || !parsed) return;
+    if (!m.declared) m.title = parsed.title.trim() || m.title; // the speaker's own title is never rewritten
+    m.text = parsed.text.trim() || m.text;
+    m.freshAt = Date.now();
+  }
+
+  // =====================================================================
+  // Input: live speech or replay. Both end in addUtterance().
+  // =====================================================================
+  function addUtterance(text, t) {
+    text = text.replace(/\s+/g, ' ').trim();
+    if (!text) return;
+    const i = S.utterances.push({ text, t: t ?? Date.now() - S.startedAt, raw: null, statements: null }) - 1;
+    if (words(text) >= 3) { queue.clean.push(i); kick(); }
+    dirty();
+    scheduleRender();
+  }
+
+  // ---------- live speech (Web Speech API, from voice-notes.html) ----------
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null, talking = false, buffer = '', interim = '', pauseTimer = null, timerId = null, talkStart = 0;
+  function flush() {
+    clearTimeout(pauseTimer);
+    const text = buffer.trim(); buffer = '';
+    if (text) addUtterance(text);
+  }
+  async function startTalking() {
+    if (!SR) return;
+    if (S.source !== 'live' && S.utterances.length && !confirm('Start a new live session? The replayed session will be replaced (download it first to keep it).')) return;
+    if (!S.utterances.length || S.source !== 'live') newSession('live');
+    await ensureFolderPermission();
+    let local = false;
+    if (els.local.checked && typeof SR.available === 'function') {
+      const opts = { langs: ['en-US'], processLocally: true };
+      const a = await SR.available(opts).catch(() => 'unavailable');
+      if (a === 'available') local = true;
+      else if (a === 'downloadable' || a === 'downloading') { setStatus('Installing on-device speech…'); local = await SR.install(opts).catch(() => false); }
+    }
+    recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    if (local) recognition.processLocally = true;
+    recognition.onresult = (e) => {
+      interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) buffer += ' ' + r[0].transcript.trim(); else interim += r[0].transcript;
+      }
+      clearTimeout(pauseTimer);
+      if (words(buffer) >= MAX_UTT_WORDS) flush();
+      else if (buffer.trim()) pauseTimer = setTimeout(flush, PAUSE_MS);
+      scheduleRender();
+    };
+    recognition.onerror = (e) => {
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
+      setStatus(e.error === 'not-allowed' ? 'Microphone blocked. Allow it from the icon at the left of the address bar.' : `Speech error: ${e.error}`, true);
+      if (e.error === 'not-allowed' || e.error === 'audio-capture') stopTalking();
+    };
+    recognition.onend = () => { if (talking) { try { recognition.start(); } catch {} } }; // Chrome stops after silence
+    try { recognition.start(); } catch (err) { setStatus(`Couldn't start: ${err.message}`, true); return; }
+    talking = true;
+    talkStart = Date.now();
+    timerId = setInterval(() => { els.timer.textContent = fmtTime(Date.now() - talkStart); }, 500);
+    els.talk.classList.add('on'); els.talkLabel.textContent = 'Stop';
+    els.replay.disabled = els.newBtn.disabled = true;
+    setStatus(local ? 'Listening (on-device)…' : 'Listening…');
+  }
+  function stopTalking() {
+    talking = false;
+    if (recognition) { recognition.onend = null; try { recognition.stop(); } catch {} }
+    flush(); interim = '';
+    clearInterval(timerId);
+    els.talk.classList.remove('on'); els.talkLabel.textContent = 'Talk';
+    els.replay.disabled = els.newBtn.disabled = false;
+    setStatus(working || queue.clean.length ? 'Stopped listening; catching up…' : 'Stopped.');
+    scheduleSave(true);
+  }
+
+  // ---------- replay ----------
+  let replaying = false;
+  async function replayFile(file) {
+    const textIn = await file.text();
+    let utts;
+    if (/\.json$/i.test(file.name)) {
+      const j = JSON.parse(textIn);
+      utts = (j.utterances || []).map((u) => (typeof u === 'string' ? { text: u } : { text: u.text, t: u.t }));
+      if (j.topic && !els.topic.value.trim()) els.topic.value = j.topic;
+    } else utts = textIn.split(/\n+/).map((l) => ({ text: l.trim() })).filter((u) => u.text);
+    if (!utts.length) { setStatus('Nothing to replay in that file.', true); return; }
+    newSession(`replay:${file.name}`);
+    replaying = true;
+    els.stopReplay.hidden = false; els.replay.disabled = els.talk.disabled = els.newBtn.disabled = true;
+    const speed = els.speed.value;
+    try {
+      for (let i = 0; i < utts.length && replaying; i++) {
+        const gap = utts[i].t != null && i ? utts[i].t - utts[i - 1].t : words(utts[i].text) / 150 * 60000; // ~150 words/min
+        if (speed === 'max') { while (replaying && (queue.clean.length || /^(clean|group)/.test(current))) await sleep(200); }
+        else await sleep(Math.max(0, gap) / +speed);
+        if (!replaying) break;
+        setStatus(`Replaying ${file.name}: utterance ${i + 1}/${utts.length}`);
+        addUtterance(utts[i].text, Date.now() - S.startedAt);
+      }
+      setStatus(replaying ? `Replay finished; ${working ? 'catching up…' : 'done.'}` : 'Replay stopped.');
+    } finally {
+      replaying = false;
+      els.stopReplay.hidden = true; els.replay.disabled = els.talk.disabled = els.newBtn.disabled = false;
+      scheduleSave(true);
+    }
+  }
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // =====================================================================
+  // Saving: download, or auto-save into a folder the user picked (File System Access API).
+  // =====================================================================
+  let dirHandle = null, saveTimer = null, saveChain = Promise.resolve();
+  let rev = 0, savedRev = 0; // rev counts changes; a save records the rev it wrote, so a change made mid-save is never lost
+  const dirty = () => { rev++; };
+  const unsavedChanges = () => rev !== savedRev;
+  const sessionJSON = () => JSON.stringify(S, (k, v) => (['emb', 'sum', 'centroid'].includes(k) ? undefined : v), 2);
+  const fileName = () => `session-${S.source.replace(/^replay:/, 'replay-').replace(/\.\w+$/, '').replace(/[^\w-]/g, '_')}-${S.id.replace(/[:.]/g, '-')}.json`;
+  function idb(op, key, val) {
+    return new Promise((resolve) => {
+      try {
+        const req = indexedDB.open('mirror', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('kv');
+        req.onsuccess = () => {
+          const tx = req.result.transaction('kv', op === 'get' ? 'readonly' : 'readwrite');
+          const r = op === 'get' ? tx.objectStore('kv').get(key) : tx.objectStore('kv').put(val, key);
+          r.onsuccess = () => resolve(r.result); r.onerror = () => resolve(null);
+        };
+        req.onerror = () => resolve(null);
+      } catch { resolve(null); }
+    });
+  }
+  async function ensureFolderPermission() {
+    if (!dirHandle) return false;
+    try {
+      if ((await dirHandle.queryPermission({ mode: 'readwrite' })) === 'granted') return true;
+      return (await dirHandle.requestPermission({ mode: 'readwrite' })) === 'granted'; // needs a click; Talk/Replay provide one
+    } catch { return false; }
+  }
+  function scheduleSave(now = false) {
+    if (!dirHandle || !unsavedChanges()) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveToFolder, now ? 0 : 20000);
+  }
+  // Saves run one at a time and each writes the latest state. Overlapping saves used to leave an older version on disk.
+  function saveToFolder() { saveChain = saveChain.then(writeSession, writeSession); return saveChain; }
+  async function writeSession() {
+    if (!dirHandle || !S.utterances.length || !unsavedChanges()) return;
+    const r = rev, sessionId = S.id;
+    try {
+      if ((await dirHandle.queryPermission({ mode: 'readwrite' })) !== 'granted') { showAllowSave(); return; }
+      const fh = await dirHandle.getFileHandle(fileName(), { create: true });
+      const w = await fh.createWritable();
+      await w.write(sessionJSON()); await w.close();
+      if (S.id === sessionId) savedRev = r;
+      els.saved.textContent = `saved ${new Date().toLocaleTimeString()} → ${dirHandle.name}/`;
+      if (unsavedChanges()) scheduleSave();
+    } catch (e) { els.saved.textContent = `save failed: ${e.message}`; }
+  }
+  // Chrome can ask again for folder access after a reload; make that impossible to miss.
+  function showAllowSave() {
+    els.saved.innerHTML = `<button type="button" id="allow-save">Allow saving to ${esc(dirHandle.name)}/</button>`;
+    $('allow-save').addEventListener('click', async () => { if (await ensureFolderPermission()) { els.saved.textContent = `saving to ${dirHandle.name}/`; saveToFolder(); } });
+  }
+  setInterval(() => { if (unsavedChanges() && (talking || replaying)) saveToFolder(); }, 30000);
+
+  // =====================================================================
+  // Rendering
+  // =====================================================================
+  let renderQueued = false;
+  function scheduleRender() { if (!renderQueued) { renderQueued = true; requestAnimationFrame(() => { renderQueued = false; render(); }); } }
+  function keepOpen(container, fn) { // innerHTML re-renders would collapse anything the user opened
+    const open = new Set([...container.querySelectorAll('details[open][data-key]')].map((d) => d.dataset.key));
+    fn();
+    for (const d of container.querySelectorAll('details[data-key]')) if (open.has(d.dataset.key)) d.open = true;
+  }
+  function render() {
+    if (!S) return;
+    const now = Date.now();
+    keepOpen(els.view, () => {
+      if (!S.mains.length) {
+        els.view.innerHTML = `<div class="empty">${S.statements.length
+          ? `${S.statements.length} statements so far. Main points appear as related things come up.`
+          : 'Press Talk and start thinking out loud. Your main points will appear here.'}</div>`;
+      } else {
+        els.view.innerHTML = `<ol class="mains">${S.mains.map((m) => {
+          const gs = groupsOf(m);
+          const nStmts = gs.reduce((a, g) => a + g.members.length, 0);
+          const age = now - (m.freshAt || 0);
+          const fresh = age < 6000 ? ` fresh" style="animation-delay:-${age}ms` : '';
+          return `<li class="main${m.dirty ? ' pending' : ''}${fresh}">
+            <span class="num">${m.n}</span>
+            <h2>${esc(m.title)}${m.declared ? ' <span class="meta">named by you</span>' : ''}${m.id === S.currentMain ? ' <span class="meta">· current</span>' : ''}</h2>
+            ${m.text ? `<p>${esc(m.text)}</p>` : ''}
+            <ul class="ideas">${gs.filter((g) => !g.declared || g.members.length > 1).map((g) => `<li>${esc(g.label)}${g.summary ? ` <span class="side">— ${esc(g.summary)}</span>` : ''}
+              <details data-key="${g.id}"><summary>${g.members.length} statement${g.members.length === 1 ? '' : 's'}</summary><ul class="stmts">${g.members.map((i) => `<li>${esc(S.statements[i].text)}</li>`).join('')}</ul></details></li>`).join('')}</ul>
+            ${(() => { // ungrouped statements spoken under this named topic belong here too
+              const extra = S.groups.filter((g) => g.members.length === 1 && !g.declared && !g.kind && S.statements[g.members[0]].topic === m.id);
+              return extra.length ? `<details data-key="${m.id}-more"><summary>${extra.length} more statement${extra.length === 1 ? '' : 's'} not yet grouped</summary><ul class="stmts">${extra.map((g) => `<li>${esc(S.statements[g.members[0]].text)}</li>`).join('')}</ul></details>` : '';
+            })()}
+            <div class="meta">${gs.length} idea${gs.length === 1 ? '' : 's'} · ${nStmts} statements</div></li>`;
+        }).join('')}</ol>`;
+      }
+      const asides = S.groups.filter((g) => g.kind === 'aside' || g.kind === 'framing');
+      const loose = S.groups.filter((g) => g.members.length === 1 && !g.declared && !g.kind && !S.mains.some((m) => m.id === S.statements[g.members[0]].topic));
+      const waiting = S.groups.filter((g) => g.members.length > 1 && (!g.kind || (g.kind === 'point' && !g.mainId)));
+      let side = '';
+      if (waiting.length) side += `<div class="side">${waiting.length} new idea${waiting.length > 1 ? 's' : ''} being sorted…</div>`;
+      if (asides.length) side += `<details class="side" data-key="asides"><summary>Set aside (${asides.length})</summary><ul>${asides.map((g) => `<li><span class="meta">${g.kind}</span> ${esc(g.label)}${g.summary ? ` — ${esc(g.summary)}` : ''}</li>`).join('')}</ul></details>`;
+      if (loose.length) side += `<details class="side" data-key="loose"><summary>Not yet grouped (${loose.length} statements)</summary><ul>${loose.map((g) => `<li>${esc(S.statements[g.members[0]].text)}</li>`).join('')}</ul></details>`;
+      if (side) els.view.insertAdjacentHTML('beforeend', `<div style="margin-top:12px; display:grid; gap:6px">${side}</div>`);
+    });
+    if (S.mains.some((m) => now - (m.freshAt || 0) < 6000)) setTimeout(scheduleRender, 1000);
+
+    // debug
+    const toLabel = S.groups.filter(needsLabel).length;
+    const toPlace = S.groups.filter((g) => g.kind === 'point' && !g.mainId).length;
+    const toDistil = S.mains.filter((m) => m.dirty).length;
+    els.queue.textContent = `${current || (working ? 'working…' : 'idle')} · queue: ${queue.clean.length} to clean, ${toLabel} groups to label, ${toPlace} to place, ${toDistil} points to distil · ${S.utterances.length} utterances, ${S.statements.length} statements, ${S.groups.length} groups, ${S.calls.length} calls`;
+    if (els.debug.open) {
+      const nearBottom = els.transcript.scrollHeight - els.transcript.scrollTop - els.transcript.clientHeight < 40;
+      els.transcript.innerHTML = S.utterances.map((u, i) => `<div class="utt"><span class="meta">${i + 1} · ${fmtTime(u.t)}</span>${esc(u.text)}${u.statements?.length
+        ? `<ul class="stmts">${u.statements.map((k) => `<li>${esc(S.statements[k].text)}</li>`).join('')}</ul>` : ''}</div>`).join('')
+        + (talking ? `<div class="interim">${esc(buffer)} ${esc(interim)}</div>` : '');
+      if (nearBottom) els.transcript.scrollTop = els.transcript.scrollHeight;
+    }
+  }
+  function logCall(rec) {
+    const d = document.createElement('details');
+    d.innerHTML = `<summary class="${rec.error ? 'bad' : ''}">${fmtTime(rec.at)} ${rec.task} ${secs(rec.ms)} · ${esc(rec.label)} → ${esc(rec.error || clip(rec.raw || '', 110))}</summary><pre>IN:\n${esc(rec.user)}\n\nOUT:\n${esc(rec.raw ?? rec.error)}</pre>`;
+    appendLog(d);
+  }
+  function log(text) { const d = document.createElement('div'); d.className = 'meta'; d.textContent = `· ${text}`; appendLog(d); }
+  function appendLog(node) {
+    const nearBottom = els.log.scrollHeight - els.log.scrollTop - els.log.clientHeight < 40;
+    els.log.appendChild(node);
+    if (nearBottom) els.log.scrollTop = els.log.scrollHeight;
+  }
+
+  // =====================================================================
+  // Startup + wiring
+  // =====================================================================
+  async function checkEnv() {
+    let framed; try { framed = window.self !== window.top; } catch { framed = true; }
+    $('framed').hidden = !framed;
+    els.pillSpeech.textContent = SR ? 'Speech: ok' : 'Speech: unsupported';
+    els.pillSpeech.className = `pill ${SR ? 'ok' : 'bad'}`;
+    if (!SR) els.talk.disabled = true;
+    if (!SR || typeof SR.available !== 'function') els.local.disabled = true;
+    if (!('LanguageModel' in self)) { els.pillNano.textContent = 'Nano: missing'; els.pillNano.className = 'pill bad'; return; }
+    const a = await LanguageModel.availability(LM_OPTS).catch(() => 'error');
+    els.pillNano.textContent = `Nano: ${a}`;
+    els.pillNano.className = `pill ${a === 'available' ? 'ok' : a === 'unavailable' || a === 'error' ? 'bad' : 'warn'}`;
+  }
+
+  els.talk.addEventListener('click', () => (talking ? stopTalking() : startTalking()));
+  els.replay.addEventListener('click', () => els.replayFile.click());
+  els.replayFile.addEventListener('change', async () => {
+    const f = els.replayFile.files[0]; els.replayFile.value = '';
+    if (!f) return;
+    await ensureFolderPermission();
+    replayFile(f).catch((e) => setStatus(`Replay failed: ${e.message}`, true));
+  });
+  els.stopReplay.addEventListener('click', () => { replaying = false; });
+  els.newBtn.addEventListener('click', () => {
+    if (S.utterances.length && unsavedChanges() && !confirm('Start a new session? This one has unsaved changes (download it first if you want to keep it).')) return;
+    newSession('live');
+    els.timer.textContent = '0:00';
+    setStatus('');
+  });
+  els.download.addEventListener('click', () => {
+    const blob = new Blob([sessionJSON()], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = fileName(); a.click(); URL.revokeObjectURL(a.href);
+    if (!dirHandle) savedRev = rev;
+  });
+  els.folder.addEventListener('click', async () => {
+    if (!window.showDirectoryPicker) { setStatus('This browser cannot save to a folder; use Download session.', true); return; }
+    try {
+      dirHandle = await showDirectoryPicker({ id: 'mirror-sessions', mode: 'readwrite' });
+      await idb('put', 'dir', dirHandle);
+      els.saved.textContent = `saving to ${dirHandle.name}/`;
+      dirty(); scheduleSave(true);
+    } catch (e) { if (e.name !== 'AbortError') setStatus(`Couldn't use that folder: ${e.message}`, true); }
+  });
+  els.topic.value = lsGet('mirror.topic') || '';
+  els.topic.addEventListener('input', () => { lsSet('mirror.topic', els.topic.value); if (S && !S.utterances.length) S.topic = els.topic.value.trim(); });
+  els.debug.addEventListener('toggle', scheduleRender);
+
+  newSession('live');
+  checkEnv();
+  idb('get', 'dir').then((h) => { if (h) { dirHandle = h; els.saved.textContent = `sessions save to ${h.name}/`; } });
+})();
+</script>
+</body>
+</html>

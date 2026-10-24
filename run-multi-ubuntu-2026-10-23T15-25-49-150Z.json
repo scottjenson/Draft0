@@ -1,0 +1,2324 @@
+{
+  "mode": "multi",
+  "source": "ubuntu.txt",
+  "startedAt": "2026-10-23T15:25:49.150Z",
+  "prompts": {
+    "single": "Below is a speech-to-text transcript of me thinking out loud while developing a talk. It is messy: it has transcription errors, false starts, filler, and off-topic remarks. I often change my mind partway through.\n\nClean it up for me:\n1. Give the key points in a logical order, as a short outline with headings and bullets.\n2. Where I changed my mind or revised a point, keep only my final version.\n3. Merge points I repeat into one.\n4. Leave out off-topic remarks and asides to other people.\n5. At the end, list any open questions I raised about the talk or the slides.\n\nWrite in plain language. Don't add ideas I didn't say.",
+    "p1": "You clean up speech-recognition text. You get one short passage someone spoke while brainstorming, plus the passage before it as context only. Never rewrite or repeat the context passage.\n\nRewrite the passage as a list of short, standalone statements, one idea each.\n- Only rewrite what the speaker said. Never add introductions, headings, or summaries.\n- Fix obvious transcription errors (sound-alike words that make no sense). Use the topic, if given, to fix misheard names and terms.\n- Remove filler: um, so, okay, you know, false starts, repeated words.\n- Replace \"this\", \"that\", \"it\" with what they refer to, when it is clear.\n- Keep the speaker's meaning. Do not add ideas.\n- Keep change-of-mind phrases (\"actually\", \"on second thought\", \"scratch that\", \"what I'm trying to say\") at the start of the statement they apply to.\n- If the passage is only filler, return an empty list.\n\nExample\nPassage: \"There really is only one gesture you have to learn with iOS and Android. There are additional ones, but those are secondary. So, the point is.\"\nStatements:\n- \"iOS and Android only require learning one gesture.\"\n- \"iOS and Android have other gestures, but they are secondary.\"",
+    "p2": "You summarize one group of related statements from someone brainstorming out loud. The statements are listed in the order they were said. When the speaker changes their mind, later statements override earlier ones.\n\nReturn:\n- label: the idea in 3 to 8 words\n- summary: one or two sentences giving the speaker's final position\n- kind: \"point\" if it is part of the talk's content, \"about-the-talk\" if it is a note on slides, structure, or how to present, \"aside\" if it is off-topic or said to someone else\n\nRules:\n- Keep who holds each view. Write \"Ubuntu Touch prioritizes efficiency\", not \"the focus is efficiency\".\n- Use only what the statements say. Do not add ideas, decisions, or people.\n- If the statements are unrelated to the topic, kind is \"aside\". Do not reinterpret them to fit the topic.",
+    "p3": "You organize the ideas of a talk into an outline. Group the ideas into 2 to 6 sections in a sensible order for a talk, and give each section a short title. Use every idea exactly once."
+  },
+  "calls": [
+    {
+      "pass": "p1",
+      "label": "utt 1",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"(none)\"\n\nPassage to rewrite: \"Breaking this talk down into it looks like three parts. I'm going to talk about gestures. I'm going to talk about app selection. And I'm going to talk about some small. Additional improvements, but obviously. Primary focus is on gestures. And the point I'm making is that iOS and Android have really standardized.\"",
+      "raw": "{\"statements\":[\"Breaking this talk down into three parts.\",\"I'm going to talk about gestures.\",\"I'm going to talk about app selection.\",\"I'm going to talk about small additional improvements.\",\"The primary focus is on gestures.\",\"iOS and Android have really standardized.\"]}",
+      "parsed": {
+        "statements": [
+          "Breaking this talk down into three parts.",
+          "I'm going to talk about gestures.",
+          "I'm going to talk about app selection.",
+          "I'm going to talk about small additional improvements.",
+          "The primary focus is on gestures.",
+          "iOS and Android have really standardized."
+        ]
+      },
+      "ms": 4840.0999999940395,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 2",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Breaking this talk down into it looks like three parts. I'm going to talk about gestures. I'm going to talk about app selection. And I'm going to talk about some small. Additional improvements, but obviously. Primary focus is on gestures. And the point I'm making is that iOS and Android have really standardized.\"\n\nPassage to rewrite: \"On these two things. And so it is. Big source of confusion, for, for users to adopt Ubuntu touch if it is going to be so different. And.\"",
+      "raw": "{\"statements\": [\"On these two things, it is so.\", \"A big source of confusion is the difference for users adopting Ubuntu Touch.\", \"Ubuntu Touch being different is a major hurdle.\"]}",
+      "parsed": {
+        "statements": [
+          "On these two things, it is so.",
+          "A big source of confusion is the difference for users adopting Ubuntu Touch.",
+          "Ubuntu Touch being different is a major hurdle."
+        ]
+      },
+      "ms": 2455.300000011921,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 3",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"On these two things. And so it is. Big source of confusion, for, for users to adopt Ubuntu touch if it is going to be so different. And.\"\n\nPassage to rewrite: \"I have to. Admit that making such a big change is likely. Very much against the culture. And it's likely going to be very. Attractive so? I want to lay out what I'll call three possible. Has forward. The first one. Is to just move the gestures. Discoverable just? Take the trick that Apple uses and draw something on the screen that is there, or you're just going to see it, and they know it.\"",
+      "raw": "{\"statements\": [\n  \"I have to admit that making such a big change is likely against the culture.\",\n  \"It's likely going to be very attractive.\",\n  \"I want to lay out what I'll call three possible approaches forward.\",\n  \"The first one is to just move the gestures.\",\n  \"Discoverable just like Apple uses.\",\n  \"Draw something on the screen that is there, or you're just going to see it, and they know it.\"\n]}",
+      "parsed": {
+        "statements": [
+          "I have to admit that making such a big change is likely against the culture.",
+          "It's likely going to be very attractive.",
+          "I want to lay out what I'll call three possible approaches forward.",
+          "The first one is to just move the gestures.",
+          "Discoverable just like Apple uses.",
+          "Draw something on the screen that is there, or you're just going to see it, and they know it."
+        ]
+      },
+      "ms": 5987.399999976158,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 4",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"I have to. Admit that making such a big change is likely. Very much against the culture. And it's likely going to be very. Attractive so? I want to lay out what I'll call three possible. Has forward. The first one. Is to just move the gestures. Discoverable just? Take the trick that Apple uses and draw something on the screen that is there, or you're just going to see it, and they know it.\"\n\nPassage to rewrite: \"Actually. Little step back.\"",
+      "raw": "{\"statements\": [\"Actually, little step back.\"]}",
+      "parsed": {
+        "statements": [
+          "Actually, little step back."
+        ]
+      },
+      "ms": 1177.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 5",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Actually. Little step back.\"\n\nPassage to rewrite: \"There really is only one gesture you have to learn with iOS and Android. There are additional ones, but those are secondary. So, the point is. You have to. Learn. Thrigia at least three gestures? Choose Ubuntu charge. You have to use at least.\"",
+      "raw": "{\n  \"statements\": [\n    \"iOS and Android only require learning one gesture.\",\n    \"iOS and Android have additional gestures, but they are secondary.\",\n    \"You have to learn Thrigia at least three gestures.\",\n    \"Choose Ubuntu charge.\",\n    \"You have to use at least\"\n  ]\n}",
+      "parsed": {
+        "statements": [
+          "iOS and Android only require learning one gesture.",
+          "iOS and Android have additional gestures, but they are secondary.",
+          "You have to learn Thrigia at least three gestures.",
+          "Choose Ubuntu charge.",
+          "You have to use at least"
+        ]
+      },
+      "ms": 3923.5,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 6",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"There really is only one gesture you have to learn with iOS and Android. There are additional ones, but those are secondary. So, the point is. You have to. Learn. Thrigia at least three gestures? Choose Ubuntu charge. You have to use at least.\"\n\nPassage to rewrite: \"The right gesture appears to be frankly completely redundant. The right gesture is redundant and unnecessary, because everything it does the left shift to do. So, is that quite clear what the value? Settings is nice to have, but it is a secondary function.\"",
+      "raw": "{\"statements\": [\n  \"The right gesture seems redundant.\",\n  \"The right gesture is unnecessary because the left shift performs the same action.\",\n  \"Is the value of the right gesture clear?\",\n  \"Settings are useful, but secondary.\",\n  \"Choose Ubuntu charge.\"\n]}",
+      "parsed": {
+        "statements": [
+          "The right gesture seems redundant.",
+          "The right gesture is unnecessary because the left shift performs the same action.",
+          "Is the value of the right gesture clear?",
+          "Settings are useful, but secondary.",
+          "Choose Ubuntu charge."
+        ]
+      },
+      "ms": 3552.5,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 7",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"The right gesture appears to be frankly completely redundant. The right gesture is redundant and unnecessary, because everything it does the left shift to do. So, is that quite clear what the value? Settings is nice to have, but it is a secondary function.\"\n\nPassage to rewrite: \"And so.\"",
+      "raw": "{\"statements\": [\"And so.\"]}",
+      "parsed": {
+        "statements": [
+          "And so."
+        ]
+      },
+      "ms": 855.3000000119209,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 8",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"And so.\"\n\nPassage to rewrite: \"It's, it's not.\"",
+      "raw": "{\"statements\": [\"It is not.\"]}",
+      "parsed": {
+        "statements": [
+          "It is not."
+        ]
+      },
+      "ms": 844.8000000119209,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 9",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"It's, it's not.\"\n\nPassage to rewrite: \"The issue that's going to touch is that it hits people over the head. With multiple gestures. There are four. All right, the tutorial teaches you for. So there. Now, of course, you really only need one. You're really only need. Which is the side gesture, but that's to how users see that they see it as the fact that you need multitats.\"",
+      "raw": "{\"statements\": [\n  \"The new system hits people over the head with multiple gestures.\",\n  \"There are four gestures.\",\n  \"The tutorial teaches you four gestures.\",\n  \"You really only need one gesture.\",\n  \"The side gesture is the most important.\",\n  \"Users see the multiple gestures as needing multitasking.\"\n]}",
+      "parsed": {
+        "statements": [
+          "The new system hits people over the head with multiple gestures.",
+          "There are four gestures.",
+          "The tutorial teaches you four gestures.",
+          "You really only need one gesture.",
+          "The side gesture is the most important.",
+          "Users see the multiple gestures as needing multitasking."
+        ]
+      },
+      "ms": 4010,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 10",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"The issue that's going to touch is that it hits people over the head. With multiple gestures. There are four. All right, the tutorial teaches you for. So there. Now, of course, you really only need one. You're really only need. Which is the side gesture, but that's to how users see that they see it as the fact that you need multitats.\"\n\nPassage to rewrite: \"Okay.\"",
+      "raw": "{\"statements\": [\"Okay.\"]}",
+      "parsed": {
+        "statements": [
+          "Okay."
+        ]
+      },
+      "ms": 867.5999999940395,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 11",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Okay.\"\n\nPassage to rewrite: \"So the minimal thing that I would suggest that you do? Is that? Had. Helper. Visual feedback, but there's actually a bar on the side. It is there it is drawn. It is always on the screen. Make it a setting so power users can get rid of it. Make it a setting so power users can so that expert users can turn it off.\"",
+      "raw": "{\"statements\": [\n  \"I would suggest visual feedback.\",\n  \"There is a bar on the side.\",\n  \"The bar is always on the screen.\",\n  \"Make the bar a setting.\",\n  \"Power users can turn the bar off.\",\n  \"Expert users can turn the bar off.\"\n]}",
+      "parsed": {
+        "statements": [
+          "I would suggest visual feedback.",
+          "There is a bar on the side.",
+          "The bar is always on the screen.",
+          "Make the bar a setting.",
+          "Power users can turn the bar off.",
+          "Expert users can turn the bar off."
+        ]
+      },
+      "ms": 3785.5,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 12",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"So the minimal thing that I would suggest that you do? Is that? Had. Helper. Visual feedback, but there's actually a bar on the side. It is there it is drawn. It is always on the screen. Make it a setting so power users can get rid of it. Make it a setting so power users can so that expert users can turn it off.\"\n\nPassage to rewrite: \"But for novices. That bar is always there. That, and it encourages that this is the one gesture that you have to learn. We give up on the fact that everybody else wants the bottom gestures. We keep the side gesture. But the other thing that we do is that we.\"",
+      "raw": "{\n  \"statements\": [\n    \"For novices, the bar is always visible.\",\n    \"This bar encourages learning the side gesture.\",\n    \"We're prioritizing the side gesture over bottom gestures.\",\n    \"We are keeping the side gesture.\",\n    \"We also...\",\n    \"We implement other features.\"\n  ]\n}",
+      "parsed": {
+        "statements": [
+          "For novices, the bar is always visible.",
+          "This bar encourages learning the side gesture.",
+          "We're prioritizing the side gesture over bottom gestures.",
+          "We are keeping the side gesture.",
+          "We also...",
+          "We implement other features."
+        ]
+      },
+      "ms": 4215.4000000059605,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 13",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"But for novices. That bar is always there. That, and it encourages that this is the one gesture that you have to learn. We give up on the fact that everybody else wants the bottom gestures. We keep the side gesture. But the other thing that we do is that we.\"\n\nPassage to rewrite: \"Have the gesture, just be the home screen. Make it clear, here's the stuff. Here's how you launch.\"",
+      "raw": "{\"statements\": [\"Have a gesture to go to the home screen.\", \"Make the home screen clear.\", \"Show how to launch apps.\"]}",
+      "parsed": {
+        "statements": [
+          "Have a gesture to go to the home screen.",
+          "Make the home screen clear.",
+          "Show how to launch apps."
+        ]
+      },
+      "ms": 1922.5,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 14",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Have the gesture, just be the home screen. Make it clear, here's the stuff. Here's how you launch.\"\n\nPassage to rewrite: \"Okay, so. That's also what's important is that? The home screen is a menu. Andrew at iOS is an app. So? What? There are a lot of things about Android and iOS that are quite similar that are all quite different. The first one is that the home screen is an app.\"",
+      "raw": "{\"statements\":[\"The home screen is a menu.\",\"Andrew at iOS is an app.\",\"Android and iOS have many similar but different aspects.\",\"The home screen is an app.\"]}",
+      "parsed": {
+        "statements": [
+          "The home screen is a menu.",
+          "Andrew at iOS is an app.",
+          "Android and iOS have many similar but different aspects.",
+          "The home screen is an app."
+        ]
+      },
+      "ms": 2395,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 15",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Okay, so. That's also what's important is that? The home screen is a menu. Andrew at iOS is an app. So? What? There are a lot of things about Android and iOS that are quite similar that are all quite different. The first one is that the home screen is an app.\"\n\nPassage to rewrite: \"It's a place that you go to. You actually. When you're done with right, when you're done with? Your mail app. You go home, which effectively puts. You don't go home in.\"",
+      "raw": "{\"statements\": [\n  \"You go to the home screen.\",\n  \"After using the mail app, you go to the home screen.\",\n  \"The home screen effectively puts you back to the home screen.\"\n]}",
+      "parsed": {
+        "statements": [
+          "You go to the home screen.",
+          "After using the mail app, you go to the home screen.",
+          "The home screen effectively puts you back to the home screen."
+        ]
+      },
+      "ms": 2932.5999999940395,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 16",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"It's a place that you go to. You actually. When you're done with right, when you're done with? Your mail app. You go home, which effectively puts. You don't go home in.\"\n\nPassage to rewrite: \"So?\"",
+      "raw": "{\"statements\": [\"So?\"]}",
+      "parsed": {
+        "statements": [
+          "So?"
+        ]
+      },
+      "ms": 801.0999999940395,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 17",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"So?\"\n\nPassage to rewrite: \"Ninja in iOS. Shockingly similar features. Swipe up from the bottom. Home is an amp, not a menu.\"",
+      "raw": "{\"statements\": [\n  \"Ninja exists on iOS.\",\n  \"Ninja has surprisingly similar features to Android.\",\n  \"Swipe up from the bottom navigates to the home screen.\",\n  \"The home screen is an app launcher, not a traditional menu.\"\n]}",
+      "parsed": {
+        "statements": [
+          "Ninja exists on iOS.",
+          "Ninja has surprisingly similar features to Android.",
+          "Swipe up from the bottom navigates to the home screen.",
+          "The home screen is an app launcher, not a traditional menu."
+        ]
+      },
+      "ms": 3157.800000011921,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 18",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Ninja in iOS. Shockingly similar features. Swipe up from the bottom. Home is an amp, not a menu.\"\n\nPassage to rewrite: \"Is a foundational difference.\"",
+      "raw": "{\"statements\": [\"It is a foundational difference.\"]}",
+      "parsed": {
+        "statements": [
+          "It is a foundational difference."
+        ]
+      },
+      "ms": 968.5999999940395,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 19",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Is a foundational difference.\"\n\nPassage to rewrite: \"Yeah, I mean it. It works, right? I I have plucked, I plateaued.\"",
+      "raw": "{\"statements\": [\"Yes, it works.\", \"I have plucked.\", \"I plateaued.\"]}",
+      "parsed": {
+        "statements": [
+          "Yes, it works.",
+          "I have plucked.",
+          "I plateaued."
+        ]
+      },
+      "ms": 1426.199999988079,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 20",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Yeah, I mean it. It works, right? I I have plucked, I plateaued.\"\n\nPassage to rewrite: \"There. There's something interesting about how it plateaus I spent. Nine months. Turn between 207 and 200. And I would kind of go back and forth.\"",
+      "raw": "{\"statements\": [\n  \"There's something interesting about how Ubuntu Touch plateaus.\",\n  \"I spent nine months testing Ubuntu Touch.\",\n  \"The Ubuntu Touch version fluctuated between 207 and 200.\",\n  \"I would go back and forth between versions.\"\n]}",
+      "parsed": {
+        "statements": [
+          "There's something interesting about how Ubuntu Touch plateaus.",
+          "I spent nine months testing Ubuntu Touch.",
+          "The Ubuntu Touch version fluctuated between 207 and 200.",
+          "I would go back and forth between versions."
+        ]
+      },
+      "ms": 3571.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 21",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"There. There's something interesting about how it plateaus I spent. Nine months. Turn between 207 and 200. And I would kind of go back and forth.\"\n\nPassage to rewrite: \"I spent over six months basically hovering between 205 and 200. I didn't really change much.\"",
+      "raw": "{\"statements\": [\"I spent over six months hovering between 205 and 200.\"]}",
+      "parsed": {
+        "statements": [
+          "I spent over six months hovering between 205 and 200."
+        ]
+      },
+      "ms": 1579.5,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 22",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"I spent over six months basically hovering between 205 and 200. I didn't really change much.\"\n\nPassage to rewrite: \"So, I'm thinking. I want to redo how I'm talking about this gesture interface. By breaking it down into pieces. First of all, I'm not going to call out IOS and Android separately. I'm just going to lay them on top of each other and say that there are both nearly identical in the sense.\"",
+      "raw": "{\"statements\": [\n  \"I want to redo how I'm talking about the gesture interface.\",\n  \"I'm going to break it down into pieces.\",\n  \"iOS and Android are nearly identical in the sense.\"\n]}",
+      "parsed": {
+        "statements": [
+          "I want to redo how I'm talking about the gesture interface.",
+          "I'm going to break it down into pieces.",
+          "iOS and Android are nearly identical in the sense."
+        ]
+      },
+      "ms": 3072.5,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 23",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"So, I'm thinking. I want to redo how I'm talking about this gesture interface. By breaking it down into pieces. First of all, I'm not going to call out IOS and Android separately. I'm just going to lay them on top of each other and say that there are both nearly identical in the sense.\"\n\nPassage to rewrite: \"That they have. Gestures from the bottom. And settings from the top. And. What I'm struggling with right now is how to? Present this to. In the deck. You know? Coherent way by saying.\"",
+      "raw": "{\"statements\": [\n  \"They have gestures from the bottom.\",\n  \"They have settings from the top.\",\n  \"I'm struggling to present this to the deck.\",\n  \"I want to present this in a coherent way.\"\n]}",
+      "parsed": {
+        "statements": [
+          "They have gestures from the bottom.",
+          "They have settings from the top.",
+          "I'm struggling to present this to the deck.",
+          "I want to present this in a coherent way."
+        ]
+      },
+      "ms": 3273.2999999821186,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 24",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"That they have. Gestures from the bottom. And settings from the top. And. What I'm struggling with right now is how to? Present this to. In the deck. You know? Coherent way by saying.\"\n\nPassage to rewrite: \"There needs to be effectively like this headline feature, which is to say. Touch. There's two ways I'm saying that is that? Android and iOS. Are surprisingly identical in many important ways. They have two primary navigation gestures, settings, and home. Home is an app. Not a transient menu.\"",
+      "raw": "{\"statements\": [\n  \"Android and iOS are surprisingly identical in many important ways.\",\n  \"Android and iOS have two primary navigation gestures: settings and home.\",\n  \"Home is an app, not a transient menu.\",\n  \"Touch is effectively a headline feature.\"\n]}",
+      "parsed": {
+        "statements": [
+          "Android and iOS are surprisingly identical in many important ways.",
+          "Android and iOS have two primary navigation gestures: settings and home.",
+          "Home is an app, not a transient menu.",
+          "Touch is effectively a headline feature."
+        ]
+      },
+      "ms": 3488.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 25",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"There needs to be effectively like this headline feature, which is to say. Touch. There's two ways I'm saying that is that? Android and iOS. Are surprisingly identical in many important ways. They have two primary navigation gestures, settings, and home. Home is an app. Not a transient menu.\"\n\nPassage to rewrite: \"And the third one, which is related to the first one, is both. Gestures are nearly. Aren't exactly the same place. And work much the same way. This is important because it implies that there is a certain. Query keyboard, like standard between Android and iOS, and this covers 99.99 of all the phones out there.\"",
+      "raw": "{\"statements\": [\n  \"Gestures on Android and iOS are nearly the same.\",\n  \"Gestures are not exactly in the same place.\",\n  \"Gestures work much the same way on both platforms.\",\n  \"A query keyboard is a standard feature between Android and iOS.\",\n  \"This covers nearly all phones available.\"\n]}",
+      "parsed": {
+        "statements": [
+          "Gestures on Android and iOS are nearly the same.",
+          "Gestures are not exactly in the same place.",
+          "Gestures work much the same way on both platforms.",
+          "A query keyboard is a standard feature between Android and iOS.",
+          "This covers nearly all phones available."
+        ]
+      },
+      "ms": 4261.5,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 26",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"And the third one, which is related to the first one, is both. Gestures are nearly. Aren't exactly the same place. And work much the same way. This is important because it implies that there is a certain. Query keyboard, like standard between Android and iOS, and this covers 99.99 of all the phones out there.\"\n\nPassage to rewrite: \"So? There is this effectively established standard? At a deviate from that. Is just asking for users to have to learn something new, which is a hurdle. It is not a benefit. Let's take.\"",
+      "raw": "{\"statements\": [\n  \"There is an established standard for gestures.\",\n  \"Deviating from that is a hurdle for users.\",\n  \"Learning something new is not a benefit.\"\n]}",
+      "parsed": {
+        "statements": [
+          "There is an established standard for gestures.",
+          "Deviating from that is a hurdle for users.",
+          "Learning something new is not a benefit."
+        ]
+      },
+      "ms": 2758.7000000178814,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 27",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"So? There is this effectively established standard? At a deviate from that. Is just asking for users to have to learn something new, which is a hurdle. It is not a benefit. Let's take.\"\n\nPassage to rewrite: \"And. Wondering if each of these needs like a subslide? To.\"",
+      "raw": "{\"statements\": [\"And, wondering if each of these needs a subslide.\", \"Wondering if it needs to.\"]}",
+      "parsed": {
+        "statements": [
+          "And, wondering if each of these needs a subslide.",
+          "Wondering if it needs to."
+        ]
+      },
+      "ms": 1690.4000000059605,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 28",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"And. Wondering if each of these needs like a subslide? To.\"\n\nPassage to rewrite: \"App is home. App. I mean, that home is an app. The reason why that's so important is that it provides a. Very clear place to start. It provides a default place to take the user. It's a comfortable starting point.\"",
+      "raw": "{\"statements\":[\"App is home.\",\"The home is an app.\",\"It provides a clear place to start.\",\"It provides a default place to take the user.\",\"It's a comfortable starting point.\"]}",
+      "parsed": {
+        "statements": [
+          "App is home.",
+          "The home is an app.",
+          "It provides a clear place to start.",
+          "It provides a default place to take the user.",
+          "It's a comfortable starting point."
+        ]
+      },
+      "ms": 2591.7000000178814,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 29",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"App is home. App. I mean, that home is an app. The reason why that's so important is that it provides a. Very clear place to start. It provides a default place to take the user. It's a comfortable starting point.\"\n\nPassage to rewrite: \"And. Provides a way to quit an app by going home. You're effectively quitting.\"",
+      "raw": "{\"statements\": [\n  \"Going home quits an app.\",\n  \"Going home effectively quits the app.\",\n  \"Home provides a way to quit an app.\"\n]}",
+      "parsed": {
+        "statements": [
+          "Going home quits an app.",
+          "Going home effectively quits the app.",
+          "Home provides a way to quit an app."
+        ]
+      },
+      "ms": 2323.7000000178814,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 30",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"And. Provides a way to quit an app by going home. You're effectively quitting.\"\n\nPassage to rewrite: \"With Ubuntu touch. Home is a menu item. And not only that, it is a secondary menu item. The primary menu item is the switcher. So, to go to your home app, you actually have to slide out and tap this icon. Or you can slide hoates. But that is a secondary behavior secondary gephector that not all users are going to learn.\"",
+      "raw": "{\"statements\": [\n  \"Ubuntu Touch has a home menu item.\",\n  \"The home menu item is a secondary menu item.\",\n  \"The primary menu item is the switcher.\",\n  \"To go to the home app, you need to slide out and tap the icon.\",\n  \"You can also slide hoates to go to home.\",\n  \"Sliding hoates is a secondary behavior.\"\n]}",
+      "parsed": {
+        "statements": [
+          "Ubuntu Touch has a home menu item.",
+          "The home menu item is a secondary menu item.",
+          "The primary menu item is the switcher.",
+          "To go to the home app, you need to slide out and tap the icon.",
+          "You can also slide hoates to go to home.",
+          "Sliding hoates is a secondary behavior."
+        ]
+      },
+      "ms": 4812.699999988079,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 31",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"With Ubuntu touch. Home is a menu item. And not only that, it is a secondary menu item. The primary menu item is the switcher. So, to go to your home app, you actually have to slide out and tap this icon. Or you can slide hoates. But that is a secondary behavior secondary gephector that not all users are going to learn.\"\n\nPassage to rewrite: \"It's a subtlety, but? The point I'm trying to say is. With one simple gesture flip. You go home! You? And you go to a place where all your applications are. It's not the most efficient place, but it's a very stable, consistent place. Leave where you are and go home, and you do that with a single slick.\"",
+      "raw": "{\"statements\": [\n  \"With one simple gesture, you go home.\",\n  \"You go to a place where all your applications are.\",\n  \"It's not the most efficient place, but it's a very stable place.\",\n  \"You leave where you are and go home with a single gesture.\"\n]}",
+      "parsed": {
+        "statements": [
+          "With one simple gesture, you go home.",
+          "You go to a place where all your applications are.",
+          "It's not the most efficient place, but it's a very stable place.",
+          "You leave where you are and go home with a single gesture."
+        ]
+      },
+      "ms": 4135.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 32",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"It's a subtlety, but? The point I'm trying to say is. With one simple gesture flip. You go home! You? And you go to a place where all your applications are. It's not the most efficient place, but it's a very stable, consistent place. Leave where you are and go home, and you do that with a single slick.\"\n\nPassage to rewrite: \"And I've only touch a single flip, takes you to the quick launcher. Which has no icons. No icons, so you're looking at an unfamiliar list of icons?\"",
+      "raw": "{\"statements\": [\n  \"A single flip takes you to the quick launcher.\",\n  \"The quick launcher has no icons.\",\n  \"So, you're looking at an unfamiliar list of icons.\"\n]}",
+      "parsed": {
+        "statements": [
+          "A single flip takes you to the quick launcher.",
+          "The quick launcher has no icons.",
+          "So, you're looking at an unfamiliar list of icons."
+        ]
+      },
+      "ms": 2813.199999988079,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 33",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"And I've only touch a single flip, takes you to the quick launcher. Which has no icons. No icons, so you're looking at an unfamiliar list of icons?\"\n\nPassage to rewrite: \"Your icons! With no labels. Once you learn the advanced gesture to pull out, then you get a better list. But. It's the secondary gesture. It's that extra pull away.\"",
+      "raw": "{\"statements\": [\n  \"Your icons have no labels.\",\n  \"An advanced gesture reveals a better list of icons.\",\n  \"This advanced gesture is a secondary pull.\"\n]}",
+      "parsed": {
+        "statements": [
+          "Your icons have no labels.",
+          "An advanced gesture reveals a better list of icons.",
+          "This advanced gesture is a secondary pull."
+        ]
+      },
+      "ms": 2381,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 34",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Your icons! With no labels. Once you learn the advanced gesture to pull out, then you get a better list. But. It's the secondary gesture. It's that extra pull away.\"\n\nPassage to rewrite: \"Maybe the other thing I want to do is to say.\"",
+      "raw": "{\"statements\": [\"Maybe I want to say...\"]}",
+      "parsed": {
+        "statements": [
+          "Maybe I want to say..."
+        ]
+      },
+      "ms": 1006.5,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 35",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Maybe the other thing I want to do is to say.\"\n\nPassage to rewrite: \"Design philosophy of Ubuntu touch. Is really. To make Advanced. Linux programmers happy? It is all about efficiency. It's about quickly changing. It's about minimal movement. And it does that well? But it's important to understand that is its Target audience. It's targeted audience. Is Linux programmers? Why else would you include terminal as a default app on your home screen?\"",
+      "raw": "{\"statements\": [\n  \"Ubuntu Touch's design philosophy aims to please advanced Linux programmers.\",\n  \"The design prioritizes efficiency.\",\n  \"It focuses on quick changes.\",\n  \"It emphasizes minimal movement.\",\n  \"Terminal is a default app on the home screen.\",\n  \"The target audience is Linux programmers.\"\n]}",
+      "parsed": {
+        "statements": [
+          "Ubuntu Touch's design philosophy aims to please advanced Linux programmers.",
+          "The design prioritizes efficiency.",
+          "It focuses on quick changes.",
+          "It emphasizes minimal movement.",
+          "Terminal is a default app on the home screen.",
+          "The target audience is Linux programmers."
+        ]
+      },
+      "ms": 3995.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 36",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Design philosophy of Ubuntu touch. Is really. To make Advanced. Linux programmers happy? It is all about efficiency. It's about quickly changing. It's about minimal movement. And it does that well? But it's important to understand that is its Target audience. It's targeted audience. Is Linux programmers? Why else would you include terminal as a default app on your home screen?\"\n\nPassage to rewrite: \"The target audience needs to change, especially if we want to get larger.\"",
+      "raw": "{\"statements\": [\"The target audience needs to change.\", \"Larger adoption requires a shift in the target audience.\"]}",
+      "parsed": {
+        "statements": [
+          "The target audience needs to change.",
+          "Larger adoption requires a shift in the target audience."
+        ]
+      },
+      "ms": 1836.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 37",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"The target audience needs to change, especially if we want to get larger.\"\n\nPassage to rewrite: \"It is not. It is not your place to discuss. I did not ask to this conversation. We do not need it to conversation.\"",
+      "raw": "{\"statements\": [\n  \"It is not your place to discuss this.\",\n  \"I did not ask for this conversation.\",\n  \"We do not need this conversation.\"\n]}",
+      "parsed": {
+        "statements": [
+          "It is not your place to discuss this.",
+          "I did not ask for this conversation.",
+          "We do not need this conversation."
+        ]
+      },
+      "ms": 2450.800000011921,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 38",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"It is not. It is not your place to discuss. I did not ask to this conversation. We do not need it to conversation.\"\n\nPassage to rewrite: \"Don't. Don't have this conversation? I'm not asking for it, and we don't need it.\"",
+      "raw": "{\"statements\": [\n  \"Don't have this conversation.\",\n  \"I'm not asking for it.\",\n  \"We don't need it.\"\n]}",
+      "parsed": {
+        "statements": [
+          "Don't have this conversation.",
+          "I'm not asking for it.",
+          "We don't need it."
+        ]
+      },
+      "ms": 2296,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 39",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"Don't. Don't have this conversation? I'm not asking for it, and we don't need it.\"\n\nPassage to rewrite: \"So? What? Considering? Is the fact that? We need. Highlight.\"",
+      "raw": "{\"statements\": [\n  \"We need to highlight a fact.\",\n  \"Considering...\",\n  \"What?\",\n  \"So?\"\n]}",
+      "parsed": {
+        "statements": [
+          "We need to highlight a fact.",
+          "Considering...",
+          "What?",
+          "So?"
+        ]
+      },
+      "ms": 2017.699999988079,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 40",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"So? What? Considering? Is the fact that? We need. Highlight.\"\n\nPassage to rewrite: \"How similar IOS and Android are? And. How the model? It's actually there's really two parts to this. There's the gestures of which there are just two primary ones settings and. And home. But there's the behaviors which is at home is an app. That. Is not only. Let's stable. Place with labels to make things really clear.\"",
+      "raw": "{\"statements\":[\"How similar are iOS and Android?\",\"There are two primary gestures: settings and home.\",\"The home screen is an app.\",\"The home screen is a stable place with clear labels.\",\"Actually, there are really two parts to this.\"] }",
+      "parsed": {
+        "statements": [
+          "How similar are iOS and Android?",
+          "There are two primary gestures: settings and home.",
+          "The home screen is an app.",
+          "The home screen is a stable place with clear labels.",
+          "Actually, there are really two parts to this."
+        ]
+      },
+      "ms": 3190,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 41",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"How similar IOS and Android are? And. How the model? It's actually there's really two parts to this. There's the gestures of which there are just two primary ones settings and. And home. But there's the behaviors which is at home is an app. That. Is not only. Let's stable. Place with labels to make things really clear.\"\n\nPassage to rewrite: \"But it's also it quit gesture.\"",
+      "raw": "{\"statements\": [\"But it's also a quit gesture.\"]}",
+      "parsed": {
+        "statements": [
+          "But it's also a quit gesture."
+        ]
+      },
+      "ms": 1230,
+      "error": null
+    },
+    {
+      "pass": "p1",
+      "label": "utt 42",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nContext only, do not rewrite: \"But it's also it quit gesture.\"\n\nPassage to rewrite: \"Doesn't. It is. Kind of a leave gesture. You're exiting the app. It's still there in the background for us, but.\"",
+      "raw": "{\"statements\": [\n  \"It is a leave gesture.\",\n  \"The gesture is used to exit the app.\",\n  \"The app remains in the background.\"\n]}",
+      "parsed": {
+        "statements": [
+          "It is a leave gesture.",
+          "The gesture is used to exit the app.",
+          "The app remains in the background."
+        ]
+      },
+      "ms": 2248.2999999821186,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g1 (3)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. Breaking this talk down into three parts.\n2. I'm going to break it down into pieces.\n3. Actually, there are really two parts to this.",
+      "raw": "{\"label\": \"Structure of the talk\", \"summary\": \"The talk will have two parts, not three, instead of breaking it down into pieces.\", \"kind\": \"about-the-talk\"}",
+      "parsed": {
+        "label": "Structure of the talk",
+        "summary": "The talk will have two parts, not three, instead of breaking it down into pieces.",
+        "kind": "about-the-talk"
+      },
+      "ms": 3243.199999988079,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g2 (10)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. I'm going to talk about gestures.\n2. The primary focus is on gestures.\n3. The first one is to just move the gestures.\n4. There are four gestures.\n5. The tutorial teaches you four gestures.\n6. You really only need one gesture.\n7. I want to redo how I'm talking about the gesture interface.\n8. They have gestures from the bottom.\n9. Gestures are not exactly in the same place.\n10. There is an established standard for gestures.",
+      "raw": "{\"label\": \"Ubuntu Touch gesture interface\", \"summary\": \"The talk will focus on gestures, specifically how they are implemented and used in Ubuntu Touch. It appears the speaker is reconsidering the emphasis on a complex gesture system.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Ubuntu Touch gesture interface",
+        "summary": "The talk will focus on gestures, specifically how they are implemented and used in Ubuntu Touch. It appears the speaker is reconsidering the emphasis on a complex gesture system.",
+        "kind": "point"
+      },
+      "ms": 3260.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g3 (9)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. iOS and Android only require learning one gesture.\n2. iOS and Android have additional gestures, but they are secondary.\n3. You have to learn Thrigia at least three gestures.\n4. The new system hits people over the head with multiple gestures.\n5. Users see the multiple gestures as needing multitasking.\n6. Android and iOS have two primary navigation gestures: settings and home.\n7. Touch is effectively a headline feature.\n8. Gestures work much the same way on both platforms.\n9. There are two primary gestures: settings and home.",
+      "raw": "{\"label\": \"Gesture complexity comparison - Ubuntu Touch\", \"summary\": \"Ubuntu Touch has multiple gestures that are perceived as requiring multitasking, unlike Android and iOS which focus on simpler, primarily two-gesture navigation.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Gesture complexity comparison - Ubuntu Touch",
+        "summary": "Ubuntu Touch has multiple gestures that are perceived as requiring multitasking, unlike Android and iOS which focus on simpler, primarily two-gesture navigation.",
+        "kind": "point"
+      },
+      "ms": 3076.5,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g4 (8)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. The right gesture seems redundant.\n2. The right gesture is unnecessary because the left shift performs the same action.\n3. Is the value of the right gesture clear?\n4. The side gesture is the most important.\n5. This bar encourages learning the side gesture.\n6. We're prioritizing the side gesture over bottom gestures.\n7. We are keeping the side gesture.\n8. This advanced gesture is a secondary pull.",
+      "raw": "{\"label\": \"Side gesture is most important\", \"summary\": \"Ubuntu Touch prioritizes the side gesture and is keeping it, prioritizing it over bottom gestures. The side gesture is considered the most important.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Side gesture is most important",
+        "summary": "Ubuntu Touch prioritizes the side gesture and is keeping it, prioritizing it over bottom gestures. The side gesture is considered the most important.",
+        "kind": "point"
+      },
+      "ms": 2888.300000011921,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g5 (3)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. But it's also a quit gesture.\n2. It is a leave gesture.\n3. The gesture is used to exit the app.",
+      "raw": "{\"label\": \"App exit gesture discussion\", \"summary\": \"The gesture is used to exit the app, similar to a quit or leave gesture.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "App exit gesture discussion",
+        "summary": "The gesture is used to exit the app, similar to a quit or leave gesture.",
+        "kind": "point"
+      },
+      "ms": 2329.0999999940395,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g6 (3)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. Have a gesture to go to the home screen.\n2. With one simple gesture, you go home.\n3. You leave where you are and go home with a single gesture.",
+      "raw": "{\"label\": \"Gesture-based home screen navigation\", \"summary\": \"They want a single gesture to navigate to the home screen, leaving the current screen.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Gesture-based home screen navigation",
+        "summary": "They want a single gesture to navigate to the home screen, leaving the current screen.",
+        "kind": "point"
+      },
+      "ms": 2330.699999988079,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g7 (4)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. I'm going to talk about app selection.\n2. Show how to launch apps.\n3. Andrew at iOS is an app.\n4. You go to a place where all your applications are.",
+      "raw": "{\"label\": \"App launch and selection comparison\", \"summary\": \"The discussion will cover app selection and how to launch apps, contrasting with iOS.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "App launch and selection comparison",
+        "summary": "The discussion will cover app selection and how to launch apps, contrasting with iOS.",
+        "kind": "point"
+      },
+      "ms": 2245.4000000059605,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g9 (7)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. iOS and Android have really standardized.\n2. Android and iOS have many similar but different aspects.\n3. iOS and Android are nearly identical in the sense.\n4. Android and iOS are surprisingly identical in many important ways.\n5. Gestures on Android and iOS are nearly the same.\n6. A query keyboard is a standard feature between Android and iOS.\n7. How similar are iOS and Android?",
+      "raw": "{\"label\": \"iOS and Android are very similar\", \"summary\": \"Android and iOS are surprisingly identical in many important ways, especially with gestures and standard features like query keyboards.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "iOS and Android are very similar",
+        "summary": "Android and iOS are surprisingly identical in many important ways, especially with gestures and standard features like query keyboards.",
+        "kind": "point"
+      },
+      "ms": 2608.0999999940395,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g10 (7)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. A big source of confusion is the difference for users adopting Ubuntu Touch.\n2. Ubuntu Touch being different is a major hurdle.\n3. There's something interesting about how Ubuntu Touch plateaus.\n4. I spent nine months testing Ubuntu Touch.\n5. The Ubuntu Touch version fluctuated between 207 and 200.\n6. Ubuntu Touch has a home menu item.\n7. Ubuntu Touch's design philosophy aims to please advanced Linux programmers.",
+      "raw": "{\n  \"label\": \"Ubuntu Touch user experience challenges\",\n  \"summary\": \"Ubuntu Touch differs from Android and iOS, creating user confusion and presenting a hurdle to adoption. The design philosophy aims to appeal to advanced Linux programmers.\",\n  \"kind\": \"point\"\n}",
+      "parsed": {
+        "label": "Ubuntu Touch user experience challenges",
+        "summary": "Ubuntu Touch differs from Android and iOS, creating user confusion and presenting a hurdle to adoption. The design philosophy aims to appeal to advanced Linux programmers.",
+        "kind": "point"
+      },
+      "ms": 3425.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g19 (4)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. Settings are useful, but secondary.\n2. They have settings from the top.\n3. It provides a default place to take the user.\n4. It focuses on quick changes.",
+      "raw": "{\"label\": \"Quick changes are important.\", \"summary\": \"Ubuntu Touch focuses on quick changes, providing a default place for the user while settings are useful but secondary.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Quick changes are important.",
+        "summary": "Ubuntu Touch focuses on quick changes, providing a default place for the user while settings are useful but secondary.",
+        "kind": "point"
+      },
+      "ms": 2443.399999976158,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g22 (6)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. There is a bar on the side.\n2. The bar is always on the screen.\n3. Make the bar a setting.\n4. Power users can turn the bar off.\n5. Expert users can turn the bar off.\n6. For novices, the bar is always visible.",
+      "raw": "{\"label\": \"side bar visibility for users\", \"summary\": \"The side bar will be visible for novices, but power/expert users can turn it off in settings.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "side bar visibility for users",
+        "summary": "The side bar will be visible for novices, but power/expert users can turn it off in settings.",
+        "kind": "point"
+      },
+      "ms": 2455.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g24 (10)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. Make the home screen clear.\n2. The home screen is a menu.\n3. The home screen is an app.\n4. You go to the home screen.\n5. After using the mail app, you go to the home screen.\n6. The home screen effectively puts you back to the home screen.\n7. Swipe up from the bottom navigates to the home screen.\n8. The home screen is an app launcher, not a traditional menu.\n9. Home is an app, not a transient menu.\n10. The home screen is an app.",
+      "raw": "{\"label\": \"Ubuntu Touch home screen as an app\", \"summary\": \"The home screen is an app launcher, not a menu, and effectively returns users to the home screen. It's also described as an app, not a transient menu.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Ubuntu Touch home screen as an app",
+        "summary": "The home screen is an app launcher, not a menu, and effectively returns users to the home screen. It's also described as an app, not a transient menu.",
+        "kind": "point"
+      },
+      "ms": 3470.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g25 (7)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. App is home.\n2. The home is an app.\n3. Going home quits an app.\n4. Going home effectively quits the app.\n5. Home provides a way to quit an app.\n6. To go to the home app, you need to slide out and tap the icon.\n7. The app remains in the background.",
+      "raw": "{\"label\": \"Home app quits apps\", \"summary\": \"Ubuntu Touch's home app serves as a way to quit other apps, effectively stopping them from remaining in the background.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Home app quits apps",
+        "summary": "Ubuntu Touch's home app serves as a way to quit other apps, effectively stopping them from remaining in the background.",
+        "kind": "point"
+      },
+      "ms": 2597.2999999821186,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g29 (3)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. Discoverable just like Apple uses.\n2. Ninja exists on iOS.\n3. Ninja has surprisingly similar features to Android.",
+      "raw": "{\"label\": \"Ubuntu Touch compares to Android, iOS\", \"summary\": \"Ubuntu Touch aims for discoverability like Apple, while Ninja on iOS resembles Android. \", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Ubuntu Touch compares to Android, iOS",
+        "summary": "Ubuntu Touch aims for discoverability like Apple, while Ninja on iOS resembles Android. ",
+        "kind": "point"
+      },
+      "ms": 2381.600000023842,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g35 (2)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. I'm struggling to present this to the deck.\n2. I want to present this in a coherent way.",
+      "raw": "{\"label\": \"Presenting in a coherent way\", \"summary\": \"The speaker wants to present the information in a coherent manner.\", \"kind\": \"about-the-talk\"}",
+      "parsed": {
+        "label": "Presenting in a coherent way",
+        "summary": "The speaker wants to present the information in a coherent manner.",
+        "kind": "about-the-talk"
+      },
+      "ms": 2256.9000000059605,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g40 (2)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. Wondering if it needs to.\n2. We don't need it.",
+      "raw": "{\"label\": \"Ubuntu Touch's need for something\", \"summary\": \"The speaker believes Ubuntu Touch does not need something.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Ubuntu Touch's need for something",
+        "summary": "The speaker believes Ubuntu Touch does not need something.",
+        "kind": "point"
+      },
+      "ms": 2032.300000011921,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g41 (2)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. It provides a clear place to start.\n2. It's a comfortable starting point.",
+      "raw": "{\"label\": \"Comfortable starting point for Ubuntu Touch\", \"summary\": \"Ubuntu Touch provides a comfortable and clear starting point for users.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Comfortable starting point for Ubuntu Touch",
+        "summary": "Ubuntu Touch provides a comfortable and clear starting point for users.",
+        "kind": "point"
+      },
+      "ms": 2115.199999988079,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g43 (2)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. You can also slide hoates to go to home.\n2. Sliding hoates is a secondary behavior.",
+      "raw": "{\"label\": \"Sliding gestures for navigation\", \"summary\": \"Sliding gestures are secondary navigation behaviors.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Sliding gestures for navigation",
+        "summary": "Sliding gestures are secondary navigation behaviors.",
+        "kind": "point"
+      },
+      "ms": 1817.2999999821186,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g46 (4)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. The quick launcher has no icons.\n2. So, you're looking at an unfamiliar list of icons.\n3. Your icons have no labels.\n4. An advanced gesture reveals a better list of icons.",
+      "raw": "{\"label\": \"Ubuntu Touch icon display\", \"summary\": \"The user describes an unusual icon display in Ubuntu Touch, noting the lack of icons and labels initially, but mentioning an advanced gesture reveals more icons.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Ubuntu Touch icon display",
+        "summary": "The user describes an unusual icon display in Ubuntu Touch, noting the lack of icons and labels initially, but mentioning an advanced gesture reveals more icons.",
+        "kind": "point"
+      },
+      "ms": 2798.5999999940395,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g51 (2)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. The target audience needs to change.\n2. Larger adoption requires a shift in the target audience.",
+      "raw": "{\"label\": \"Target audience needs to change\", \"summary\": \"Larger adoption requires a shift in who Ubuntu Touch targets.\", \"kind\": \"point\"}",
+      "parsed": {
+        "label": "Target audience needs to change",
+        "summary": "Larger adoption requires a shift in who Ubuntu Touch targets.",
+        "kind": "point"
+      },
+      "ms": 2023.4000000059605,
+      "error": null
+    },
+    {
+      "pass": "p2",
+      "label": "g52 (5)",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nStatements, in the order they were said:\n1. It is not your place to discuss this.\n2. I did not ask for this conversation.\n3. We do not need this conversation.\n4. Don't have this conversation.\n5. I'm not asking for it.",
+      "raw": "{\"label\": \"Avoid discussing Android vs iOS\", \"summary\": \"The speaker strongly opposes having a conversation comparing Ubuntu Touch to Android and iOS.\", \"kind\": \"aside\"}",
+      "parsed": {
+        "label": "Avoid discussing Android vs iOS",
+        "summary": "The speaker strongly opposes having a conversation comparing Ubuntu Touch to Android and iOS.",
+        "kind": "aside"
+      },
+      "ms": 2191.5,
+      "error": null
+    },
+    {
+      "pass": "p3",
+      "label": "18 groups",
+      "user": "Topic: Ubuntu Touch discussion comparing Android and iOS\n\nIdeas:\ng2: Ubuntu Touch gesture interface — The talk will focus on gestures, specifically how they are implemented and used in Ubuntu Touch. It appears the speaker is reconsidering the emphasis on a complex gesture system.\ng3: Gesture complexity comparison - Ubuntu Touch — Ubuntu Touch has multiple gestures that are perceived as requiring multitasking, unlike Android and iOS which focus on simpler, primarily two-gesture navigation.\ng4: Side gesture is most important — Ubuntu Touch prioritizes the side gesture and is keeping it, prioritizing it over bottom gestures. The side gesture is considered the most important.\ng5: App exit gesture discussion — The gesture is used to exit the app, similar to a quit or leave gesture.\ng6: Gesture-based home screen navigation — They want a single gesture to navigate to the home screen, leaving the current screen.\ng7: App launch and selection comparison — The discussion will cover app selection and how to launch apps, contrasting with iOS.\ng9: iOS and Android are very similar — Android and iOS are surprisingly identical in many important ways, especially with gestures and standard features like query keyboards.\ng10: Ubuntu Touch user experience challenges — Ubuntu Touch differs from Android and iOS, creating user confusion and presenting a hurdle to adoption. The design philosophy aims to appeal to advanced Linux programmers.\ng19: Quick changes are important. — Ubuntu Touch focuses on quick changes, providing a default place for the user while settings are useful but secondary.\ng22: side bar visibility for users — The side bar will be visible for novices, but power/expert users can turn it off in settings.\ng24: Ubuntu Touch home screen as an app — The home screen is an app launcher, not a menu, and effectively returns users to the home screen. It's also described as an app, not a transient menu.\ng25: Home app quits apps — Ubuntu Touch's home app serves as a way to quit other apps, effectively stopping them from remaining in the background.\ng29: Ubuntu Touch compares to Android, iOS — Ubuntu Touch aims for discoverability like Apple, while Ninja on iOS resembles Android.\ng40: Ubuntu Touch's need for something — The speaker believes Ubuntu Touch does not need something.\ng41: Comfortable starting point for Ubuntu Touch — Ubuntu Touch provides a comfortable and clear starting point for users.\ng43: Sliding gestures for navigation — Sliding gestures are secondary navigation behaviors.\ng46: Ubuntu Touch icon display — The user describes an unusual icon display in Ubuntu Touch, noting the lack of icons and labels initially, but mentioning an advanced gesture reveals more icons.\ng51: Target audience needs to change — Larger adoption requires a shift in who Ubuntu Touch targets.",
+      "raw": "{\"sections\": [{\"title\": \"Overview: Ubuntu Touch's Unique Approach\", \"groupIds\": [\"g9\", \"g29\", \"g41\"]}, {\"title\": \"Gesture Navigation in Ubuntu Touch\", \"groupIds\": [\"g2\", \"g3\", \"g4\", \"g5\", \"g6\", \"g43\", \"g46\"]}, {\"title\": \"App Management & Home Screen Functionality\", \"groupIds\": [\"g24\", \"g25\"]}, {\"title\": \"User Experience & Challenges\", \"groupIds\": [\"g10\", \"g51\"]}, {\"title\": \"Ubuntu Touch's Philosophy & Future\", \"groupIds\": [\"g19\", \"g22\"]} ]}",
+      "parsed": {
+        "sections": [
+          {
+            "title": "Overview: Ubuntu Touch's Unique Approach",
+            "groupIds": [
+              "g9",
+              "g29",
+              "g41"
+            ]
+          },
+          {
+            "title": "Gesture Navigation in Ubuntu Touch",
+            "groupIds": [
+              "g2",
+              "g3",
+              "g4",
+              "g5",
+              "g6",
+              "g43",
+              "g46"
+            ]
+          },
+          {
+            "title": "App Management & Home Screen Functionality",
+            "groupIds": [
+              "g24",
+              "g25"
+            ]
+          },
+          {
+            "title": "User Experience & Challenges",
+            "groupIds": [
+              "g10",
+              "g51"
+            ]
+          },
+          {
+            "title": "Ubuntu Touch's Philosophy & Future",
+            "groupIds": [
+              "g19",
+              "g22"
+            ]
+          }
+        ]
+      },
+      "ms": 9533.199999988079,
+      "error": null
+    }
+  ],
+  "state": {
+    "topic": "Ubuntu Touch discussion comparing Android and iOS",
+    "threshold": 0.5,
+    "statements": [
+      {
+        "idx": 0,
+        "text": "Breaking this talk down into three parts.",
+        "utt": 0
+      },
+      {
+        "idx": 1,
+        "text": "I'm going to talk about gestures.",
+        "utt": 0
+      },
+      {
+        "idx": 2,
+        "text": "I'm going to talk about app selection.",
+        "utt": 0
+      },
+      {
+        "idx": 3,
+        "text": "I'm going to talk about small additional improvements.",
+        "utt": 0
+      },
+      {
+        "idx": 4,
+        "text": "The primary focus is on gestures.",
+        "utt": 0
+      },
+      {
+        "idx": 5,
+        "text": "iOS and Android have really standardized.",
+        "utt": 0
+      },
+      {
+        "idx": 6,
+        "text": "On these two things, it is so.",
+        "utt": 1
+      },
+      {
+        "idx": 7,
+        "text": "A big source of confusion is the difference for users adopting Ubuntu Touch.",
+        "utt": 1
+      },
+      {
+        "idx": 8,
+        "text": "Ubuntu Touch being different is a major hurdle.",
+        "utt": 1
+      },
+      {
+        "idx": 9,
+        "text": "I have to admit that making such a big change is likely against the culture.",
+        "utt": 2
+      },
+      {
+        "idx": 10,
+        "text": "It's likely going to be very attractive.",
+        "utt": 2
+      },
+      {
+        "idx": 11,
+        "text": "I want to lay out what I'll call three possible approaches forward.",
+        "utt": 2
+      },
+      {
+        "idx": 12,
+        "text": "The first one is to just move the gestures.",
+        "utt": 2
+      },
+      {
+        "idx": 13,
+        "text": "Discoverable just like Apple uses.",
+        "utt": 2
+      },
+      {
+        "idx": 14,
+        "text": "Draw something on the screen that is there, or you're just going to see it, and they know it.",
+        "utt": 2
+      },
+      {
+        "idx": 15,
+        "text": "Actually, little step back.",
+        "utt": 3
+      },
+      {
+        "idx": 16,
+        "text": "iOS and Android only require learning one gesture.",
+        "utt": 4
+      },
+      {
+        "idx": 17,
+        "text": "iOS and Android have additional gestures, but they are secondary.",
+        "utt": 4
+      },
+      {
+        "idx": 18,
+        "text": "You have to learn Thrigia at least three gestures.",
+        "utt": 4
+      },
+      {
+        "idx": 19,
+        "text": "Choose Ubuntu charge.",
+        "utt": 4
+      },
+      {
+        "idx": 20,
+        "text": "You have to use at least",
+        "utt": 4
+      },
+      {
+        "idx": 21,
+        "text": "The right gesture seems redundant.",
+        "utt": 5
+      },
+      {
+        "idx": 22,
+        "text": "The right gesture is unnecessary because the left shift performs the same action.",
+        "utt": 5
+      },
+      {
+        "idx": 23,
+        "text": "Is the value of the right gesture clear?",
+        "utt": 5
+      },
+      {
+        "idx": 24,
+        "text": "Settings are useful, but secondary.",
+        "utt": 5
+      },
+      {
+        "idx": 25,
+        "text": "It is not.",
+        "utt": 7
+      },
+      {
+        "idx": 26,
+        "text": "The new system hits people over the head with multiple gestures.",
+        "utt": 8
+      },
+      {
+        "idx": 27,
+        "text": "There are four gestures.",
+        "utt": 8
+      },
+      {
+        "idx": 28,
+        "text": "The tutorial teaches you four gestures.",
+        "utt": 8
+      },
+      {
+        "idx": 29,
+        "text": "You really only need one gesture.",
+        "utt": 8
+      },
+      {
+        "idx": 30,
+        "text": "The side gesture is the most important.",
+        "utt": 8
+      },
+      {
+        "idx": 31,
+        "text": "Users see the multiple gestures as needing multitasking.",
+        "utt": 8
+      },
+      {
+        "idx": 32,
+        "text": "I would suggest visual feedback.",
+        "utt": 10
+      },
+      {
+        "idx": 33,
+        "text": "There is a bar on the side.",
+        "utt": 10
+      },
+      {
+        "idx": 34,
+        "text": "The bar is always on the screen.",
+        "utt": 10
+      },
+      {
+        "idx": 35,
+        "text": "Make the bar a setting.",
+        "utt": 10
+      },
+      {
+        "idx": 36,
+        "text": "Power users can turn the bar off.",
+        "utt": 10
+      },
+      {
+        "idx": 37,
+        "text": "Expert users can turn the bar off.",
+        "utt": 10
+      },
+      {
+        "idx": 38,
+        "text": "For novices, the bar is always visible.",
+        "utt": 11
+      },
+      {
+        "idx": 39,
+        "text": "This bar encourages learning the side gesture.",
+        "utt": 11
+      },
+      {
+        "idx": 40,
+        "text": "We're prioritizing the side gesture over bottom gestures.",
+        "utt": 11
+      },
+      {
+        "idx": 41,
+        "text": "We are keeping the side gesture.",
+        "utt": 11
+      },
+      {
+        "idx": 42,
+        "text": "We implement other features.",
+        "utt": 11
+      },
+      {
+        "idx": 43,
+        "text": "Have a gesture to go to the home screen.",
+        "utt": 12
+      },
+      {
+        "idx": 44,
+        "text": "Make the home screen clear.",
+        "utt": 12
+      },
+      {
+        "idx": 45,
+        "text": "Show how to launch apps.",
+        "utt": 12
+      },
+      {
+        "idx": 46,
+        "text": "The home screen is a menu.",
+        "utt": 13
+      },
+      {
+        "idx": 47,
+        "text": "Andrew at iOS is an app.",
+        "utt": 13
+      },
+      {
+        "idx": 48,
+        "text": "Android and iOS have many similar but different aspects.",
+        "utt": 13
+      },
+      {
+        "idx": 49,
+        "text": "The home screen is an app.",
+        "utt": 13
+      },
+      {
+        "idx": 50,
+        "text": "You go to the home screen.",
+        "utt": 14
+      },
+      {
+        "idx": 51,
+        "text": "After using the mail app, you go to the home screen.",
+        "utt": 14
+      },
+      {
+        "idx": 52,
+        "text": "The home screen effectively puts you back to the home screen.",
+        "utt": 14
+      },
+      {
+        "idx": 53,
+        "text": "Ninja exists on iOS.",
+        "utt": 16
+      },
+      {
+        "idx": 54,
+        "text": "Ninja has surprisingly similar features to Android.",
+        "utt": 16
+      },
+      {
+        "idx": 55,
+        "text": "Swipe up from the bottom navigates to the home screen.",
+        "utt": 16
+      },
+      {
+        "idx": 56,
+        "text": "The home screen is an app launcher, not a traditional menu.",
+        "utt": 16
+      },
+      {
+        "idx": 57,
+        "text": "It is a foundational difference.",
+        "utt": 17
+      },
+      {
+        "idx": 58,
+        "text": "Yes, it works.",
+        "utt": 18
+      },
+      {
+        "idx": 59,
+        "text": "I have plucked.",
+        "utt": 18
+      },
+      {
+        "idx": 60,
+        "text": "There's something interesting about how Ubuntu Touch plateaus.",
+        "utt": 19
+      },
+      {
+        "idx": 61,
+        "text": "I spent nine months testing Ubuntu Touch.",
+        "utt": 19
+      },
+      {
+        "idx": 62,
+        "text": "The Ubuntu Touch version fluctuated between 207 and 200.",
+        "utt": 19
+      },
+      {
+        "idx": 63,
+        "text": "I would go back and forth between versions.",
+        "utt": 19
+      },
+      {
+        "idx": 64,
+        "text": "I spent over six months hovering between 205 and 200.",
+        "utt": 20
+      },
+      {
+        "idx": 65,
+        "text": "I want to redo how I'm talking about the gesture interface.",
+        "utt": 21
+      },
+      {
+        "idx": 66,
+        "text": "I'm going to break it down into pieces.",
+        "utt": 21
+      },
+      {
+        "idx": 67,
+        "text": "iOS and Android are nearly identical in the sense.",
+        "utt": 21
+      },
+      {
+        "idx": 68,
+        "text": "They have gestures from the bottom.",
+        "utt": 22
+      },
+      {
+        "idx": 69,
+        "text": "They have settings from the top.",
+        "utt": 22
+      },
+      {
+        "idx": 70,
+        "text": "I'm struggling to present this to the deck.",
+        "utt": 22
+      },
+      {
+        "idx": 71,
+        "text": "I want to present this in a coherent way.",
+        "utt": 22
+      },
+      {
+        "idx": 72,
+        "text": "Android and iOS are surprisingly identical in many important ways.",
+        "utt": 23
+      },
+      {
+        "idx": 73,
+        "text": "Android and iOS have two primary navigation gestures: settings and home.",
+        "utt": 23
+      },
+      {
+        "idx": 74,
+        "text": "Home is an app, not a transient menu.",
+        "utt": 23
+      },
+      {
+        "idx": 75,
+        "text": "Touch is effectively a headline feature.",
+        "utt": 23
+      },
+      {
+        "idx": 76,
+        "text": "Gestures on Android and iOS are nearly the same.",
+        "utt": 24
+      },
+      {
+        "idx": 77,
+        "text": "Gestures are not exactly in the same place.",
+        "utt": 24
+      },
+      {
+        "idx": 78,
+        "text": "Gestures work much the same way on both platforms.",
+        "utt": 24
+      },
+      {
+        "idx": 79,
+        "text": "A query keyboard is a standard feature between Android and iOS.",
+        "utt": 24
+      },
+      {
+        "idx": 80,
+        "text": "This covers nearly all phones available.",
+        "utt": 24
+      },
+      {
+        "idx": 81,
+        "text": "There is an established standard for gestures.",
+        "utt": 25
+      },
+      {
+        "idx": 82,
+        "text": "Deviating from that is a hurdle for users.",
+        "utt": 25
+      },
+      {
+        "idx": 83,
+        "text": "Learning something new is not a benefit.",
+        "utt": 25
+      },
+      {
+        "idx": 84,
+        "text": "And, wondering if each of these needs a subslide.",
+        "utt": 26
+      },
+      {
+        "idx": 85,
+        "text": "Wondering if it needs to.",
+        "utt": 26
+      },
+      {
+        "idx": 86,
+        "text": "App is home.",
+        "utt": 27
+      },
+      {
+        "idx": 87,
+        "text": "The home is an app.",
+        "utt": 27
+      },
+      {
+        "idx": 88,
+        "text": "It provides a clear place to start.",
+        "utt": 27
+      },
+      {
+        "idx": 89,
+        "text": "It provides a default place to take the user.",
+        "utt": 27
+      },
+      {
+        "idx": 90,
+        "text": "It's a comfortable starting point.",
+        "utt": 27
+      },
+      {
+        "idx": 91,
+        "text": "Going home quits an app.",
+        "utt": 28
+      },
+      {
+        "idx": 92,
+        "text": "Going home effectively quits the app.",
+        "utt": 28
+      },
+      {
+        "idx": 93,
+        "text": "Home provides a way to quit an app.",
+        "utt": 28
+      },
+      {
+        "idx": 94,
+        "text": "Ubuntu Touch has a home menu item.",
+        "utt": 29
+      },
+      {
+        "idx": 95,
+        "text": "The home menu item is a secondary menu item.",
+        "utt": 29
+      },
+      {
+        "idx": 96,
+        "text": "The primary menu item is the switcher.",
+        "utt": 29
+      },
+      {
+        "idx": 97,
+        "text": "To go to the home app, you need to slide out and tap the icon.",
+        "utt": 29
+      },
+      {
+        "idx": 98,
+        "text": "You can also slide hoates to go to home.",
+        "utt": 29
+      },
+      {
+        "idx": 99,
+        "text": "Sliding hoates is a secondary behavior.",
+        "utt": 29
+      },
+      {
+        "idx": 100,
+        "text": "With one simple gesture, you go home.",
+        "utt": 30
+      },
+      {
+        "idx": 101,
+        "text": "You go to a place where all your applications are.",
+        "utt": 30
+      },
+      {
+        "idx": 102,
+        "text": "It's not the most efficient place, but it's a very stable place.",
+        "utt": 30
+      },
+      {
+        "idx": 103,
+        "text": "You leave where you are and go home with a single gesture.",
+        "utt": 30
+      },
+      {
+        "idx": 104,
+        "text": "A single flip takes you to the quick launcher.",
+        "utt": 31
+      },
+      {
+        "idx": 105,
+        "text": "The quick launcher has no icons.",
+        "utt": 31
+      },
+      {
+        "idx": 106,
+        "text": "So, you're looking at an unfamiliar list of icons.",
+        "utt": 31
+      },
+      {
+        "idx": 107,
+        "text": "Your icons have no labels.",
+        "utt": 32
+      },
+      {
+        "idx": 108,
+        "text": "An advanced gesture reveals a better list of icons.",
+        "utt": 32
+      },
+      {
+        "idx": 109,
+        "text": "This advanced gesture is a secondary pull.",
+        "utt": 32
+      },
+      {
+        "idx": 110,
+        "text": "Maybe I want to say...",
+        "utt": 33
+      },
+      {
+        "idx": 111,
+        "text": "Ubuntu Touch's design philosophy aims to please advanced Linux programmers.",
+        "utt": 34
+      },
+      {
+        "idx": 112,
+        "text": "The design prioritizes efficiency.",
+        "utt": 34
+      },
+      {
+        "idx": 113,
+        "text": "It focuses on quick changes.",
+        "utt": 34
+      },
+      {
+        "idx": 114,
+        "text": "It emphasizes minimal movement.",
+        "utt": 34
+      },
+      {
+        "idx": 115,
+        "text": "Terminal is a default app on the home screen.",
+        "utt": 34
+      },
+      {
+        "idx": 116,
+        "text": "The target audience is Linux programmers.",
+        "utt": 34
+      },
+      {
+        "idx": 117,
+        "text": "The target audience needs to change.",
+        "utt": 35
+      },
+      {
+        "idx": 118,
+        "text": "Larger adoption requires a shift in the target audience.",
+        "utt": 35
+      },
+      {
+        "idx": 119,
+        "text": "It is not your place to discuss this.",
+        "utt": 36
+      },
+      {
+        "idx": 120,
+        "text": "I did not ask for this conversation.",
+        "utt": 36
+      },
+      {
+        "idx": 121,
+        "text": "We do not need this conversation.",
+        "utt": 36
+      },
+      {
+        "idx": 122,
+        "text": "Don't have this conversation.",
+        "utt": 37
+      },
+      {
+        "idx": 123,
+        "text": "I'm not asking for it.",
+        "utt": 37
+      },
+      {
+        "idx": 124,
+        "text": "We don't need it.",
+        "utt": 37
+      },
+      {
+        "idx": 125,
+        "text": "We need to highlight a fact.",
+        "utt": 38
+      },
+      {
+        "idx": 126,
+        "text": "How similar are iOS and Android?",
+        "utt": 39
+      },
+      {
+        "idx": 127,
+        "text": "There are two primary gestures: settings and home.",
+        "utt": 39
+      },
+      {
+        "idx": 128,
+        "text": "The home screen is an app.",
+        "utt": 39
+      },
+      {
+        "idx": 129,
+        "text": "The home screen is a stable place with clear labels.",
+        "utt": 39
+      },
+      {
+        "idx": 130,
+        "text": "Actually, there are really two parts to this.",
+        "utt": 39
+      },
+      {
+        "idx": 131,
+        "text": "But it's also a quit gesture.",
+        "utt": 40
+      },
+      {
+        "idx": 132,
+        "text": "It is a leave gesture.",
+        "utt": 41
+      },
+      {
+        "idx": 133,
+        "text": "The gesture is used to exit the app.",
+        "utt": 41
+      },
+      {
+        "idx": 134,
+        "text": "The app remains in the background.",
+        "utt": 41
+      }
+    ],
+    "groups": [
+      {
+        "id": "g1",
+        "members": [
+          0,
+          66,
+          130
+        ],
+        "label": "Structure of the talk",
+        "summary": "The talk will have two parts, not three, instead of breaking it down into pieces.",
+        "kind": "about-the-talk"
+      },
+      {
+        "id": "g2",
+        "members": [
+          1,
+          4,
+          12,
+          27,
+          28,
+          29,
+          65,
+          68,
+          77,
+          81
+        ],
+        "label": "Ubuntu Touch gesture interface",
+        "summary": "The talk will focus on gestures, specifically how they are implemented and used in Ubuntu Touch. It appears the speaker is reconsidering the emphasis on a complex gesture system.",
+        "kind": "point"
+      },
+      {
+        "id": "g3",
+        "members": [
+          16,
+          17,
+          18,
+          26,
+          31,
+          73,
+          75,
+          78,
+          127
+        ],
+        "label": "Gesture complexity comparison - Ubuntu Touch",
+        "summary": "Ubuntu Touch has multiple gestures that are perceived as requiring multitasking, unlike Android and iOS which focus on simpler, primarily two-gesture navigation.",
+        "kind": "point"
+      },
+      {
+        "id": "g4",
+        "members": [
+          21,
+          22,
+          23,
+          30,
+          39,
+          40,
+          41,
+          109
+        ],
+        "label": "Side gesture is most important",
+        "summary": "Ubuntu Touch prioritizes the side gesture and is keeping it, prioritizing it over bottom gestures. The side gesture is considered the most important.",
+        "kind": "point"
+      },
+      {
+        "id": "g5",
+        "members": [
+          131,
+          132,
+          133
+        ],
+        "label": "App exit gesture discussion",
+        "summary": "The gesture is used to exit the app, similar to a quit or leave gesture.",
+        "kind": "point"
+      },
+      {
+        "id": "g6",
+        "members": [
+          43,
+          100,
+          103
+        ],
+        "label": "Gesture-based home screen navigation",
+        "summary": "They want a single gesture to navigate to the home screen, leaving the current screen.",
+        "kind": "point"
+      },
+      {
+        "id": "g7",
+        "members": [
+          2,
+          45,
+          47,
+          101
+        ],
+        "label": "App launch and selection comparison",
+        "summary": "The discussion will cover app selection and how to launch apps, contrasting with iOS.",
+        "kind": "point"
+      },
+      {
+        "id": "g8",
+        "members": [
+          3
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g9",
+        "members": [
+          5,
+          48,
+          67,
+          72,
+          76,
+          79,
+          126
+        ],
+        "label": "iOS and Android are very similar",
+        "summary": "Android and iOS are surprisingly identical in many important ways, especially with gestures and standard features like query keyboards.",
+        "kind": "point"
+      },
+      {
+        "id": "g10",
+        "members": [
+          7,
+          8,
+          60,
+          61,
+          62,
+          94,
+          111
+        ],
+        "label": "Ubuntu Touch user experience challenges",
+        "summary": "Ubuntu Touch differs from Android and iOS, creating user confusion and presenting a hurdle to adoption. The design philosophy aims to appeal to advanced Linux programmers.",
+        "kind": "point"
+      },
+      {
+        "id": "g11",
+        "members": [
+          6
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g12",
+        "members": [
+          9
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g13",
+        "members": [
+          10
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g14",
+        "members": [
+          11
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g15",
+        "members": [
+          14
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g16",
+        "members": [
+          15
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g17",
+        "members": [
+          19
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g18",
+        "members": [
+          20
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g19",
+        "members": [
+          24,
+          69,
+          89,
+          113
+        ],
+        "label": "Quick changes are important.",
+        "summary": "Ubuntu Touch focuses on quick changes, providing a default place for the user while settings are useful but secondary.",
+        "kind": "point"
+      },
+      {
+        "id": "g20",
+        "members": [
+          25
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g21",
+        "members": [
+          32
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g22",
+        "members": [
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ],
+        "label": "side bar visibility for users",
+        "summary": "The side bar will be visible for novices, but power/expert users can turn it off in settings.",
+        "kind": "point"
+      },
+      {
+        "id": "g23",
+        "members": [
+          42
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g24",
+        "members": [
+          44,
+          46,
+          49,
+          50,
+          51,
+          52,
+          55,
+          56,
+          74,
+          128
+        ],
+        "label": "Ubuntu Touch home screen as an app",
+        "summary": "The home screen is an app launcher, not a menu, and effectively returns users to the home screen. It's also described as an app, not a transient menu.",
+        "kind": "point"
+      },
+      {
+        "id": "g25",
+        "members": [
+          86,
+          87,
+          91,
+          92,
+          93,
+          97,
+          134
+        ],
+        "label": "Home app quits apps",
+        "summary": "Ubuntu Touch's home app serves as a way to quit other apps, effectively stopping them from remaining in the background.",
+        "kind": "point"
+      },
+      {
+        "id": "g26",
+        "members": [
+          95
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g27",
+        "members": [
+          115
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g28",
+        "members": [
+          129
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g29",
+        "members": [
+          13,
+          53,
+          54
+        ],
+        "label": "Ubuntu Touch compares to Android, iOS",
+        "summary": "Ubuntu Touch aims for discoverability like Apple, while Ninja on iOS resembles Android.",
+        "kind": "point"
+      },
+      {
+        "id": "g30",
+        "members": [
+          57
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g31",
+        "members": [
+          58
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g32",
+        "members": [
+          59
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g33",
+        "members": [
+          63
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g34",
+        "members": [
+          64
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g35",
+        "members": [
+          70,
+          71
+        ],
+        "label": "Presenting in a coherent way",
+        "summary": "The speaker wants to present the information in a coherent manner.",
+        "kind": "about-the-talk"
+      },
+      {
+        "id": "g36",
+        "members": [
+          80
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g37",
+        "members": [
+          82
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g38",
+        "members": [
+          83
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g39",
+        "members": [
+          84
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g40",
+        "members": [
+          85,
+          124
+        ],
+        "label": "Ubuntu Touch's need for something",
+        "summary": "The speaker believes Ubuntu Touch does not need something.",
+        "kind": "point"
+      },
+      {
+        "id": "g41",
+        "members": [
+          88,
+          90
+        ],
+        "label": "Comfortable starting point for Ubuntu Touch",
+        "summary": "Ubuntu Touch provides a comfortable and clear starting point for users.",
+        "kind": "point"
+      },
+      {
+        "id": "g42",
+        "members": [
+          96
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g43",
+        "members": [
+          98,
+          99
+        ],
+        "label": "Sliding gestures for navigation",
+        "summary": "Sliding gestures are secondary navigation behaviors.",
+        "kind": "point"
+      },
+      {
+        "id": "g44",
+        "members": [
+          102
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g45",
+        "members": [
+          104
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g46",
+        "members": [
+          105,
+          106,
+          107,
+          108
+        ],
+        "label": "Ubuntu Touch icon display",
+        "summary": "The user describes an unusual icon display in Ubuntu Touch, noting the lack of icons and labels initially, but mentioning an advanced gesture reveals more icons.",
+        "kind": "point"
+      },
+      {
+        "id": "g47",
+        "members": [
+          110
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g48",
+        "members": [
+          112
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g49",
+        "members": [
+          114
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g50",
+        "members": [
+          116
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      },
+      {
+        "id": "g51",
+        "members": [
+          117,
+          118
+        ],
+        "label": "Target audience needs to change",
+        "summary": "Larger adoption requires a shift in who Ubuntu Touch targets.",
+        "kind": "point"
+      },
+      {
+        "id": "g52",
+        "members": [
+          119,
+          120,
+          121,
+          122,
+          123
+        ],
+        "label": "Avoid discussing Android vs iOS",
+        "summary": "The speaker strongly opposes having a conversation comparing Ubuntu Touch to Android and iOS.",
+        "kind": "aside"
+      },
+      {
+        "id": "g53",
+        "members": [
+          125
+        ],
+        "label": "",
+        "summary": "",
+        "kind": null
+      }
+    ],
+    "sections": [
+      {
+        "title": "Overview: Ubuntu Touch's Unique Approach",
+        "groupIds": [
+          "g9",
+          "g29",
+          "g41"
+        ]
+      },
+      {
+        "title": "Gesture Navigation in Ubuntu Touch",
+        "groupIds": [
+          "g2",
+          "g3",
+          "g4",
+          "g5",
+          "g6",
+          "g43",
+          "g46"
+        ]
+      },
+      {
+        "title": "App Management & Home Screen Functionality",
+        "groupIds": [
+          "g24",
+          "g25"
+        ]
+      },
+      {
+        "title": "User Experience & Challenges",
+        "groupIds": [
+          "g10",
+          "g51"
+        ]
+      },
+      {
+        "title": "Ubuntu Touch's Philosophy & Future",
+        "groupIds": [
+          "g19",
+          "g22"
+        ]
+      }
+    ]
+  },
+  "totalMs": 178569.90000000596,
+  "error": null,
+  "env": {
+    "Chrome": "155",
+    "Framed": "no",
+    "Prompt API": "available"
+  },
+  "transcriptWords": 1306,
+  "utterances": [
+    "Breaking this talk down into it looks like three parts. I'm going to talk about gestures. I'm going to talk about app selection. And I'm going to talk about some small. Additional improvements, but obviously. Primary focus is on gestures. And the point I'm making is that iOS and Android have really standardized.",
+    "On these two things. And so it is. Big source of confusion, for, for users to adopt Ubuntu touch if it is going to be so different. And.",
+    "I have to. Admit that making such a big change is likely. Very much against the culture. And it's likely going to be very. Attractive so? I want to lay out what I'll call three possible. Has forward. The first one. Is to just move the gestures. Discoverable just? Take the trick that Apple uses and draw something on the screen that is there, or you're just going to see it, and they know it.",
+    "Actually. Little step back.",
+    "There really is only one gesture you have to learn with iOS and Android. There are additional ones, but those are secondary. So, the point is. You have to. Learn. Thrigia at least three gestures? Choose Ubuntu charge. You have to use at least.",
+    "The right gesture appears to be frankly completely redundant. The right gesture is redundant and unnecessary, because everything it does the left shift to do. So, is that quite clear what the value? Settings is nice to have, but it is a secondary function.",
+    "And so.",
+    "It's, it's not.",
+    "The issue that's going to touch is that it hits people over the head. With multiple gestures. There are four. All right, the tutorial teaches you for. So there. Now, of course, you really only need one. You're really only need. Which is the side gesture, but that's to how users see that they see it as the fact that you need multitats.",
+    "Okay.",
+    "So the minimal thing that I would suggest that you do? Is that? Had. Helper. Visual feedback, but there's actually a bar on the side. It is there it is drawn. It is always on the screen. Make it a setting so power users can get rid of it. Make it a setting so power users can so that expert users can turn it off.",
+    "But for novices. That bar is always there. That, and it encourages that this is the one gesture that you have to learn. We give up on the fact that everybody else wants the bottom gestures. We keep the side gesture. But the other thing that we do is that we.",
+    "Have the gesture, just be the home screen. Make it clear, here's the stuff. Here's how you launch.",
+    "Okay, so. That's also what's important is that? The home screen is a menu. Andrew at iOS is an app. So? What? There are a lot of things about Android and iOS that are quite similar that are all quite different. The first one is that the home screen is an app.",
+    "It's a place that you go to. You actually. When you're done with right, when you're done with? Your mail app. You go home, which effectively puts. You don't go home in.",
+    "So?",
+    "Ninja in iOS. Shockingly similar features. Swipe up from the bottom. Home is an amp, not a menu.",
+    "Is a foundational difference.",
+    "Yeah, I mean it. It works, right? I I have plucked, I plateaued.",
+    "There. There's something interesting about how it plateaus I spent. Nine months. Turn between 207 and 200. And I would kind of go back and forth.",
+    "I spent over six months basically hovering between 205 and 200. I didn't really change much.",
+    "So, I'm thinking. I want to redo how I'm talking about this gesture interface. By breaking it down into pieces. First of all, I'm not going to call out IOS and Android separately. I'm just going to lay them on top of each other and say that there are both nearly identical in the sense.",
+    "That they have. Gestures from the bottom. And settings from the top. And. What I'm struggling with right now is how to? Present this to. In the deck. You know? Coherent way by saying.",
+    "There needs to be effectively like this headline feature, which is to say. Touch. There's two ways I'm saying that is that? Android and iOS. Are surprisingly identical in many important ways. They have two primary navigation gestures, settings, and home. Home is an app. Not a transient menu.",
+    "And the third one, which is related to the first one, is both. Gestures are nearly. Aren't exactly the same place. And work much the same way. This is important because it implies that there is a certain. Query keyboard, like standard between Android and iOS, and this covers 99.99 of all the phones out there.",
+    "So? There is this effectively established standard? At a deviate from that. Is just asking for users to have to learn something new, which is a hurdle. It is not a benefit. Let's take.",
+    "And. Wondering if each of these needs like a subslide? To.",
+    "App is home. App. I mean, that home is an app. The reason why that's so important is that it provides a. Very clear place to start. It provides a default place to take the user. It's a comfortable starting point.",
+    "And. Provides a way to quit an app by going home. You're effectively quitting.",
+    "With Ubuntu touch. Home is a menu item. And not only that, it is a secondary menu item. The primary menu item is the switcher. So, to go to your home app, you actually have to slide out and tap this icon. Or you can slide hoates. But that is a secondary behavior secondary gephector that not all users are going to learn.",
+    "It's a subtlety, but? The point I'm trying to say is. With one simple gesture flip. You go home! You? And you go to a place where all your applications are. It's not the most efficient place, but it's a very stable, consistent place. Leave where you are and go home, and you do that with a single slick.",
+    "And I've only touch a single flip, takes you to the quick launcher. Which has no icons. No icons, so you're looking at an unfamiliar list of icons?",
+    "Your icons! With no labels. Once you learn the advanced gesture to pull out, then you get a better list. But. It's the secondary gesture. It's that extra pull away.",
+    "Maybe the other thing I want to do is to say.",
+    "Design philosophy of Ubuntu touch. Is really. To make Advanced. Linux programmers happy? It is all about efficiency. It's about quickly changing. It's about minimal movement. And it does that well? But it's important to understand that is its Target audience. It's targeted audience. Is Linux programmers? Why else would you include terminal as a default app on your home screen?",
+    "The target audience needs to change, especially if we want to get larger.",
+    "It is not. It is not your place to discuss. I did not ask to this conversation. We do not need it to conversation.",
+    "Don't. Don't have this conversation? I'm not asking for it, and we don't need it.",
+    "So? What? Considering? Is the fact that? We need. Highlight.",
+    "How similar IOS and Android are? And. How the model? It's actually there's really two parts to this. There's the gestures of which there are just two primary ones settings and. And home. But there's the behaviors which is at home is an app. That. Is not only. Let's stable. Place with labels to make things really clear.",
+    "But it's also it quit gesture.",
+    "Doesn't. It is. Kind of a leave gesture. You're exiting the app. It's still there in the background for us, but."
+  ]
+}

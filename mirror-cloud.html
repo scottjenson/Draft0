@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mirror Cloud</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Mirror Cloud: talk, and a cloud model keeps a live outline of what you've said.
+   Speech stays on-device (Web Speech API). At pauses (max once per 30 s, or at once for an edit) the current outline,
+   a few earlier utterances and the new ones go to a model via OpenRouter, which returns only the points that changed.
+   Every version is kept. */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --ink: #17202b; --muted: #5d6877; --line: #dde2e9;
+  --accent: #2c4fd6; --accent-ink: #ffffff; --rec: #d33a2c; --ok: #1f8a4c; --warn: #b26a00; --chip: #eaeefb;
+  --fresh: rgba(44, 79, 214, 0.14);
+  --font-display: "Literata", Georgia, serif;
+  --font-body: "Public Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151b; --surface: #1a2029; --ink: #e7ebf1; --muted: #9aa5b4; --line: #2b3440;
+    --accent: #7e9bff; --accent-ink: #0d1220; --rec: #ff6a5c; --ok: #4cc782; --warn: #f0a742; --chip: #232c3d;
+    --fresh: rgba(126, 155, 255, 0.16);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151b; --surface: #1a2029; --ink: #e7ebf1; --muted: #9aa5b4; --line: #2b3440;
+  --accent: #7e9bff; --accent-ink: #0d1220; --rec: #ff6a5c; --ok: #4cc782; --warn: #f0a742; --chip: #232c3d;
+  --fresh: rgba(126, 155, 255, 0.16);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding: 20px 16px 48px; }
+.wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 14px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+h1 { font: 600 1.5rem/1.2 var(--font-display); margin: 0 8px 0 0; }
+.spacer { flex: 1; }
+.meta { font: 400 0.78rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.pill { font: 500 0.72rem/1 var(--font-mono); padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); }
+.pill.ok { color: var(--ok); } .pill.bad { color: var(--rec); }
+button, select { font: 600 0.86rem/1 var(--font-body); border-radius: 8px; padding: 8px 12px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+select { font-weight: 500; max-width: 100%; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+#talk { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); min-width: 120px; padding: 11px 18px; font-size: 0.95rem; display: inline-flex; gap: 8px; align-items: center; justify-content: center; }
+#talk.on { background: var(--rec); border-color: var(--rec); color: #fff; }
+#talk .dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+#talk.on .dot { animation: pulse 1.1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { #talk.on .dot { animation: none; } }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+.bar label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.84rem; color: var(--muted); min-width: 0; }
+input[type=text], input[type=password] { font: 400 0.86rem var(--font-body); padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); min-width: 0; }
+#topic { flex: 1; min-width: 200px; }
+#key { width: 15em; }
+.status { font-size: 0.85rem; color: var(--muted); min-height: 1.3em; }
+.status.err { color: var(--rec); }
+.framed { border: 1px solid var(--warn); background: var(--surface); border-radius: var(--radius); padding: 10px 12px; font-size: 0.88rem; }
+
+/* outline */
+.vnav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); }
+.vnav button { padding: 5px 9px; font-size: 0.8rem; }
+.changes { font-style: italic; }
+.points { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.point { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px 10px 52px; position: relative; }
+.point .num { position: absolute; left: 14px; top: 13px; width: 26px; height: 26px; border-radius: 50%; background: var(--chip); font: 600 0.85rem/26px var(--font-body); text-align: center; }
+.point h2 { font: 600 1.12rem/1.3 var(--font-display); margin: 0 0 4px; }
+.point .sum { font: 400 1rem/1.6 var(--font-display); margin: 0 0 4px; max-width: 70ch; }
+.point ul { margin: 2px 0 4px; padding-left: 1.2em; font-size: 0.92rem; }
+.point li { margin: 2px 0; }
+.badge { font: 600 0.66rem/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; background: var(--chip); color: var(--accent); vertical-align: middle; margin-left: 6px; }
+.point.fresh { animation: fresh 6s ease-out both; }
+@keyframes fresh { from { background: var(--fresh); border-color: var(--accent); } to { background: var(--surface); border-color: var(--line); } }
+@media (prefers-reduced-motion: reduce) { .point.fresh { animation: none; border-color: var(--accent); } }
+.retired { font-size: 0.85rem; color: var(--muted); margin: 6px 0 0; }
+.retired .undo { padding: 3px 8px; font-size: 0.8rem; margin-left: 4px; }
+.empty { color: var(--muted); font-style: italic; padding: 24px 4px; text-align: center; }
+.tail { font-size: 0.88rem; color: var(--muted); border-left: 3px solid var(--line); padding: 2px 0 2px 10px; }
+.tail .interim { font-style: italic; }
+
+/* debug */
+.debug { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+.debug > summary { cursor: pointer; font: 600 0.72rem/1.4 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.dbg-grid { display: grid; gap: 12px; margin-top: 10px; }
+.dbg-head { font: 600 0.7rem var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.transcript, .log { max-height: 320px; overflow: auto; font-size: 0.85rem; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--bg); }
+.transcript .utt { margin: 0 0 6px; }
+.transcript .utt .meta { margin-right: 6px; }
+.log details summary { cursor: pointer; font: 400 0.76rem/1.5 var(--font-mono); }
+.log details summary.bad { color: var(--rec); }
+.log pre { margin: 4px 0 8px; padding: 8px; background: var(--surface); border-radius: 6px; font: 400 0.72rem/1.45 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 300px; overflow: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Mirror</h1>
+    <span class="meta">cloud outline</span>
+    <span class="pill" id="pill-speech">Speech</span>
+    <span class="spacer"></span>
+    <span class="meta" id="saved"></span>
+  </header>
+
+  <div class="framed" id="framed" hidden>This page is inside a frame, so Chrome blocks the microphone. Open it directly: run <code>python3 -m http.server</code> in its folder and visit <code>http://localhost:8000/mirror-cloud.html</code>.</div>
+
+  <div class="bar">
+    <button id="talk" type="button"><span class="dot"></span><span id="talk-label">Talk</span></button>
+    <span class="meta" id="timer">0:00</span>
+    <input type="text" id="topic" placeholder="Topic (optional) — helps with misheard names and terms">
+  </div>
+
+  <div class="bar">
+    <label for="key">OpenRouter key <input type="password" id="key" autocomplete="off" placeholder="sk-or-…"></label>
+    <label for="model">Model <select id="model"></select></label>
+    <button id="refresh" type="button">Refresh now</button>
+    <span class="meta" id="refresh-info"></span>
+  </div>
+
+  <div class="bar">
+    <input type="file" id="replay-file" accept=".txt,.json,text/plain,application/json" hidden>
+    <button id="replay" type="button">Replay file…</button>
+    <label for="speed">Speed
+      <select id="speed">
+        <option value="1">1× (speaking pace)</option>
+        <option value="4" selected>4×</option>
+        <option value="max">Fast (refresh every 3 utterances)</option>
+      </select>
+    </label>
+    <button id="stop-replay" type="button" hidden>Stop replay</button>
+    <span class="spacer"></span>
+    <button id="folder" type="button" title="Pick a folder; sessions are then saved there automatically">Save sessions to folder…</button>
+    <button id="download" type="button">Download session</button>
+    <button id="new" type="button">New session</button>
+  </div>
+
+  <div class="status" id="status" role="status"></div>
+
+  <main id="view"></main>
+  <div class="tail" id="tail" hidden></div>
+
+  <details class="debug" id="debug">
+    <summary>Debug: transcript and model calls</summary>
+    <div class="dbg-grid">
+      <div><div class="dbg-head">Transcript</div><div class="transcript" id="transcript"></div></div>
+      <div><div class="dbg-head">Calls</div><div class="log" id="log"></div></div>
+    </div>
+  </details>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    talk: $('talk'), talkLabel: $('talk-label'), timer: $('timer'), topic: $('topic'), key: $('key'), model: $('model'),
+    refresh: $('refresh'), refreshInfo: $('refresh-info'), replay: $('replay'), replayFile: $('replay-file'), speed: $('speed'),
+    stopReplay: $('stop-replay'), folder: $('folder'), download: $('download'), newBtn: $('new'), saved: $('saved'),
+    status: $('status'), view: $('view'), tail: $('tail'), transcript: $('transcript'), log: $('log'), debug: $('debug'),
+    pillSpeech: $('pill-speech'),
+  };
+
+  // ---------- config ----------
+  const PAUSE_MS = 1600;            // silence that ends an utterance
+  const MAX_UTT_WORDS = 70;         // force a break in long runs without pauses
+  const MIN_GAP_MS = 30000;         // at most one outline refresh per 30 s (scaled down during replay)
+  const REPLAY_FAST_EVERY = 3;      // fast replay: refresh after every N utterances
+  const CALL_TIMEOUT_MS = 120000;
+  const CONTEXT_UTTS = 4;           // already-outlined utterances sent along for context (e.g. a sentence cut off mid-way)
+  // Sounds like an edit to the outline: refresh at once instead of waiting out MIN_GAP_MS. A miss just means the normal wait.
+  const EDIT_CUE = /\b(points? (number )?(one|two|three|four|five|six|seven|eight|\d)|combine|merge|collapse|get rid of|delete|remove|rename|call (it|that|those|this|them)|misspell|spell(ed|ing)|change that|scratch that)\b/i;
+  const OPENROUTER = 'https://openrouter.ai/api/v1';
+  const DEFAULT_MODEL = 'anthropic/claude-sonnet-5.5';
+  const FALLBACK_MODELS = ['anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5.5', 'anthropic/claude-haiku-5.5', 'google/gemini-3.8-flash'];
+
+  const SYSTEM = `You keep a live outline of what someone is saying while they think out loud, for example on a walk. Each time, you get the current outline (numbered as the speaker sees it), a few earlier utterances for context, and what they have said since. Return only what changes.
+
+The outline is what they would want to read back: their main points, merged and clarified.
+- 3 to 8 main points (fewer if they have said little so far). Each has a short title, a one-sentence summary, and a few bullets with the supporting details they gave.
+- Speakers jump back and forth. Add new material to the point it belongs to, wherever that is; organize by idea, not by time.
+- When they change their mind, keep only their latest position.
+- State their positions crisply, in plain language. Do not add ideas, critiques, questions, or advice of your own.
+- Leave out filler, off-topic asides, remarks to other people, and talk about the session itself (what they plan to cover, why they are listing things, how they will organize it). Never make a point out of these.
+- The transcript comes from speech recognition and contains errors. Read through them; use the topic, if given, for names and terms.
+
+What you return (the speaker reads this while talking, so change only what the new utterances call for):
+- updated: every point you add or change, complete (id, title, summary, all bullets). Leave out unchanged points; they stay exactly as they are.
+- New points get new ids (p1, p2, …). Never reuse an id that is in the outline or retired.
+- removed: points to take out, each with its id and a reason: "merged into pN", or the speaker's words asking for it. Remove a point only when they ask or when you merge it into another, never because the new utterances don't mention it.
+- order: the ids of all points in their new order, only when the order changes; otherwise an empty list. New points go at the end.
+- changes: one short sentence on what changed, e.g. "Added a point on X; merged points 2 and 3 as asked." For the first outline, say what it covers. If nothing changed, return empty lists and say so.
+
+Sometimes they talk about the outline itself: "points two and three are the same thing, combine them", "point four doesn't make sense, get rid of it", "call point one X", "by the way, the book is called Y". Point numbers mean the numbers in the current outline.
+- Carry these out fully, including titles and summaries, not just bullets.
+- To merge, put the combined content in one of the points (in updated) and remove the others with "merged into pN".
+- Act only on instructions in the new utterances. The earlier utterances are context only; they are already reflected in the outline.
+- A number mentioned in passing ("that goes to point two") is not an instruction. Act only when they clearly ask for a change to the outline.
+- Leave the instruction itself out of the outline.`;
+
+  const POINT = { type: 'object', additionalProperties: false, required: ['id', 'title', 'summary', 'bullets'],
+    properties: { id: { type: 'string' }, title: { type: 'string' }, summary: { type: 'string' }, bullets: { type: 'array', items: { type: 'string' } } } };
+  const SCHEMA = {
+    type: 'object', additionalProperties: false, required: ['updated', 'removed', 'order', 'changes'],
+    properties: {
+      updated: { type: 'array', items: POINT },
+      removed: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['id', 'reason'], properties: { id: { type: 'string' }, reason: { type: 'string' } } } },
+      order: { type: 'array', items: { type: 'string' } },
+      changes: { type: 'string' },
+    },
+  };
+
+  // ---------- helpers ----------
+  const words = (t) => (t.trim().match(/\S+/g) || []).length;
+  const secs = (ms) => `${(ms / 1000).toFixed(1)}s`;
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmtTime = (ms) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  const setStatus = (msg, err = false) => { els.status.textContent = msg; els.status.classList.toggle('err', err); };
+  const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const shortModel = (m) => m.replace(/^[^/]+\//, '');
+
+  // =====================================================================
+  // Session
+  // =====================================================================
+  let S = null;
+  let viewIndex = null; // null = follow the latest version
+  function newSession(source = 'live') {
+    S = { id: new Date().toISOString(), source, topic: els.topic.value.trim(), startedAt: Date.now(),
+      utterances: [], versions: [], calls: [], retired: [], cost: 0 };
+    viewIndex = null; lastSentUtt = 0; lastRefreshAt = 0; pending = false; urgent = false;
+    clearTimeout(refreshTimer);
+    els.log.innerHTML = '';
+    rev = 0; savedRev = 0;
+    render();
+  }
+  const latest = () => S.versions[S.versions.length - 1];
+
+  function addUtterance(text) {
+    text = text.replace(/\s+/g, ' ').trim();
+    if (!text) return;
+    S.utterances.push({ text, t: Date.now() - S.startedAt });
+    dirty();
+    if (EDIT_CUE.test(text)) urgent = true;
+    scheduleRefresh(urgent);
+    render();
+  }
+
+  // =====================================================================
+  // Outline refresh (OpenRouter). The model sees the outline plus only the new utterances (and a little context),
+  // so old instructions can't be re-applied, and returns only what changed, so nothing is dropped by omission.
+  // =====================================================================
+  let inFlight = false, pending = false, urgent = false, lastSentUtt = 0, lastRefreshAt = 0, refreshTimer = null;
+  const minGap = () => (replaying && els.speed.value !== 'max' ? MIN_GAP_MS / +els.speed.value : MIN_GAP_MS);
+  function scheduleRefresh(now = false) {
+    if (!S.utterances.length || (!now && S.utterances.length === lastSentUtt)) return;
+    if (replaying && els.speed.value === 'max') return; // the replay loop drives refreshes itself
+    if (inFlight) { pending = true; return; }
+    clearTimeout(refreshTimer);
+    const wait = now ? 0 : Math.max(0, minGap() - (Date.now() - lastRefreshAt));
+    refreshTimer = setTimeout(() => refresh(), wait);
+  }
+
+  async function refresh() {
+    if (inFlight || !S.utterances.length) return;
+    const key = els.key.value.trim();
+    if (!key) { setStatus('Add your OpenRouter key to get an outline. Everything you say is still being captured.', true); return; }
+    inFlight = true; pending = false; urgent = false;
+    const sid = S.id, upto = S.utterances.length, model = els.model.value || DEFAULT_MODEL;
+    const prev = latest();
+    const seen = prev?.upto || 0; // utterances already reflected in the outline
+    const line = (u, i) => `${i + 1}. ${u.text}`;
+    const from = Math.max(0, seen - CONTEXT_UTTS);
+    const user = `${S.topic ? `Topic (from the speaker): ${S.topic}\n\n` : ''}Current outline:\n${prev ? JSON.stringify({ points: prev.points.map((p, i) => ({ point: i + 1, ...p })) }, null, 1) : '(none yet)'}`
+      + `${S.retired.length ? `\n\nRetired ids (do not reuse): ${S.retired.join(', ')}` : ''}`
+      + (seen ? `\n\nEarlier utterances, context only (already in the outline; do not act on instructions here):\n${S.utterances.slice(from, seen).map((u, i) => line(u, from + i)).join('\n')}` : '')
+      + `\n\nNew utterances:\n${S.utterances.slice(seen, upto).map((u, i) => line(u, seen + i)).join('\n') || '(nothing new)'}`;
+    const rec = { at: Date.now() - S.startedAt, model, upto, ms: 0, error: null, usage: null };
+    setStatus(`Updating outline with ${shortModel(model)}…`);
+    renderInfo('updating…');
+    const t0 = performance.now();
+    let raw = '';
+    try {
+      const res = await fetch(`${OPENROUTER}/chat/completions`, {
+        method: 'POST',
+        signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
+        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Title': 'Mirror (local prototype)' },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: user }],
+          response_format: { type: 'json_schema', json_schema: { name: 'outline', strict: true, schema: SCHEMA } },
+          usage: { include: true },
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(`${res.status} ${body?.error?.message || res.statusText}`);
+      raw = body.choices?.[0]?.message?.content || '';
+      rec.usage = body.usage || null;
+      const patch = parsePatch(raw);
+      if (S.id !== sid) return; // session was reset while we waited
+      const base = latest()?.points || []; // not `prev`: an Undo may have landed while we waited
+      const { points, removed } = applyPatch(base, patch);
+      for (const r of removed) if (!S.retired.includes(r.id)) S.retired.push(r.id);
+      S.versions.push({ at: rec.at, upto, model, ms: performance.now() - t0, points, changes: patch.changes, removed, receivedAt: Date.now() });
+      if (rec.usage?.cost) S.cost += rec.usage.cost;
+      lastSentUtt = upto;
+      dirty();
+      setStatus('');
+    } catch (e) {
+      rec.error = e.name === 'TimeoutError' ? 'timed out' : e.message;
+      setStatus(`Outline update failed: ${rec.error}${/401|403/.test(rec.error) ? ' (check the key)' : /402/.test(rec.error) ? ' (out of credit?)' : ''}`, true);
+    } finally {
+      rec.ms = performance.now() - t0;
+      if (S.id === sid) { S.calls.push(rec); logCall(rec, user, raw); }
+      lastRefreshAt = Date.now();
+      inFlight = false;
+      render();
+      scheduleSave();
+      if (S.id === sid && (pending || S.utterances.length > lastSentUtt) && !rec.error) scheduleRefresh(urgent);
+    }
+  }
+  // Structured output should give clean JSON; tolerate a fenced or wrapped reply anyway.
+  function parsePatch(raw) {
+    let o;
+    try { o = JSON.parse(raw); } catch { const m = raw.match(/\{[\s\S]*\}/); if (!m) throw new Error('model returned no JSON'); o = JSON.parse(m[0]); }
+    const arr = (a) => (Array.isArray(a) ? a : []);
+    return { changes: String(o.changes || ''), order: arr(o.order).map(String),
+      removed: arr(o.removed).map((r) => ({ id: String(r?.id || ''), reason: String(r?.reason || '') })),
+      updated: arr(o.updated).map((p) => ({ id: String(p?.id || ''), title: String(p?.title || ''), summary: String(p?.summary || ''), bullets: arr(p?.bullets).map(String) })) };
+  }
+  // The model returns only what changed; everything else is kept exactly as it was. A point disappears only through
+  // an explicit `removed` entry (recorded, with the point itself, so it can be undone), never by being left out.
+  function applyPatch(base, patch) {
+    const points = base.map((p) => ({ ...p }));
+    const at = (id) => points.findIndex((p) => p.id === id);
+    const num = (id) => +(/^p(\d+)$/.exec(id)?.[1] || 0);
+    let next = Math.max(0, ...[...points.map((p) => p.id), ...S.retired].map(num)) + 1;
+    const updatedIds = new Set(patch.updated.map((u) => u.id));
+    const removed = [];
+    for (const r of patch.removed) {
+      const i = at(r.id);
+      if (i < 0 || updatedIds.has(r.id)) continue; // unknown, or also updated: keep it
+      removed.push({ id: r.id, reason: r.reason, index: i, point: points[i] });
+      points.splice(i, 1);
+    }
+    for (const u of patch.updated) {
+      const i = at(u.id);
+      if (i >= 0) { points[i] = u; continue; }
+      if (!u.id || S.retired.includes(u.id) || removed.some((r) => r.id === u.id)) u.id = `p${next}`; // never resurrect an id
+      next = Math.max(next, num(u.id) + 1);
+      points.push(u);
+    }
+    if (patch.order.length) { // a reorder can't drop points: any the model left out keep their place at the end
+      const rank = new Map([...new Set(patch.order)].map((id, i) => [id, i]));
+      points.sort((a, b) => (rank.get(a.id) ?? 1e9) - (rank.get(b.id) ?? 1e9));
+    }
+    return { points, removed };
+  }
+  function undoRemoval(id) {
+    const v = latest(), r = v?.removed?.find((x) => x.id === id);
+    if (!r || v.points.some((p) => p.id === id)) return;
+    const points = v.points.slice();
+    points.splice(Math.min(r.index, points.length), 0, r.point);
+    S.retired = S.retired.filter((x) => x !== id);
+    S.versions.push({ at: Date.now() - S.startedAt, upto: v.upto, model: 'undo', ms: 0, points,
+      changes: `Restored "${r.point.title}" (undo).`, removed: v.removed.filter((x) => x.id !== id), receivedAt: Date.now() });
+    viewIndex = null;
+    dirty(); render(); scheduleSave();
+  }
+
+  // =====================================================================
+  // Live speech (Web Speech API)
+  // =====================================================================
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null, talking = false, buffer = '', interim = '', pauseTimer = null, timerId = null, talkStart = 0;
+  function flush() {
+    clearTimeout(pauseTimer);
+    const text = buffer.trim(); buffer = '';
+    if (text) addUtterance(text);
+  }
+  async function startTalking() {
+    if (!SR) return;
+    // Talk continues whatever is on screen (New clears it). A replay continued live records where live speech began.
+    if (!S.utterances.length) newSession('live');
+    else if (S.source !== 'live' && S.liveFrom == null) S.liveFrom = S.utterances.length;
+    S.topic = els.topic.value.trim();
+    await ensureFolderPermission();
+    recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onresult = (e) => {
+      interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) buffer += ' ' + r[0].transcript.trim(); else interim += r[0].transcript;
+      }
+      clearTimeout(pauseTimer);
+      if (words(buffer) >= MAX_UTT_WORDS) flush();
+      else if (buffer.trim()) pauseTimer = setTimeout(flush, PAUSE_MS);
+      renderTail();
+    };
+    recognition.onerror = (e) => {
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
+      setStatus(e.error === 'not-allowed' ? 'Microphone blocked. Allow it from the icon at the left of the address bar.' : `Speech error: ${e.error}`, true);
+      if (e.error === 'not-allowed' || e.error === 'audio-capture') stopTalking();
+    };
+    recognition.onend = () => { if (talking) { try { recognition.start(); } catch {} } }; // Chrome stops after silence
+    try { recognition.start(); } catch (err) { setStatus(`Couldn't start: ${err.message}`, true); return; }
+    talking = true;
+    talkStart = Date.now();
+    timerId = setInterval(() => { els.timer.textContent = fmtTime(Date.now() - talkStart); }, 500);
+    els.talk.classList.add('on'); els.talkLabel.textContent = 'Stop';
+    els.replay.disabled = els.newBtn.disabled = true;
+    setStatus(els.key.value.trim() ? 'Listening…' : 'Listening… (add your OpenRouter key to get an outline)');
+  }
+  function stopTalking() {
+    talking = false;
+    if (recognition) { recognition.onend = null; try { recognition.stop(); } catch {} }
+    flush(); interim = '';
+    clearInterval(timerId);
+    els.talk.classList.remove('on'); els.talkLabel.textContent = 'Talk';
+    els.replay.disabled = els.newBtn.disabled = false;
+    if (S.utterances.length > lastSentUtt) scheduleRefresh(true); // final outline for the last thing said
+    scheduleSave(true);
+    render();
+  }
+
+  // ---------- replay ----------
+  let replaying = false;
+  async function replayFile(file) {
+    const textIn = await file.text();
+    let utts;
+    if (/\.json$/i.test(file.name)) {
+      const j = JSON.parse(textIn);
+      utts = (j.utterances || []).map((u) => (typeof u === 'string' ? { text: u } : { text: u.text, t: u.t }));
+      if (j.topic && !els.topic.value.trim()) els.topic.value = j.topic;
+    } else utts = textIn.split(/\n+/).map((l) => ({ text: l.trim() })).filter((u) => u.text);
+    if (!utts.length) { setStatus('Nothing to replay in that file.', true); return; }
+    newSession(`replay:${file.name}`);
+    replaying = true;
+    els.stopReplay.hidden = false; els.replay.disabled = els.talk.disabled = els.newBtn.disabled = true;
+    const speed = els.speed.value;
+    try {
+      for (let i = 0; i < utts.length && replaying; i++) {
+        if (speed !== 'max') {
+          const gap = utts[i].t != null && i ? utts[i].t - utts[i - 1].t : words(utts[i].text) / 150 * 60000; // ~150 words/min
+          await sleep(Math.max(0, gap) / +speed);
+        }
+        if (!replaying) break;
+        setStatus(`Replaying ${file.name}: utterance ${i + 1}/${utts.length}`);
+        addUtterance(utts[i].text);
+        if (speed === 'max' && ((i + 1) % REPLAY_FAST_EVERY === 0 || i === utts.length - 1)) {
+          while (inFlight) await sleep(200);
+          await refresh();
+        }
+      }
+      if (replaying && speed !== 'max') { while (inFlight) await sleep(200); if (S.utterances.length > lastSentUtt) await refresh(); }
+      setStatus(replaying ? 'Replay finished.' : 'Replay stopped.');
+    } finally {
+      replaying = false;
+      els.stopReplay.hidden = true; els.replay.disabled = els.talk.disabled = els.newBtn.disabled = false;
+      scheduleSave(true);
+    }
+  }
+
+  // =====================================================================
+  // Saving: download, or auto-save into a folder the user picked (File System Access API).
+  // Shares the folder choice with mirror.html (same origin, same IndexedDB).
+  // =====================================================================
+  let dirHandle = null, saveTimer = null, saveChain = Promise.resolve();
+  let rev = 0, savedRev = 0; // rev counts changes; a save records the rev it wrote, so a change made mid-save is never lost
+  const dirty = () => { rev++; };
+  const unsavedChanges = () => rev !== savedRev;
+  const sessionJSON = () => JSON.stringify(S, null, 2);
+  const fileName = () => `session-cloud-${S.source.replace(/^replay:/, 'replay-').replace(/\.\w+$/, '').replace(/[^\w-]/g, '_')}-${S.id.replace(/[:.]/g, '-')}.json`;
+  function idb(op, key, val) {
+    return new Promise((resolve) => {
+      try {
+        const req = indexedDB.open('mirror', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('kv');
+        req.onsuccess = () => {
+          const tx = req.result.transaction('kv', op === 'get' ? 'readonly' : 'readwrite');
+          const r = op === 'get' ? tx.objectStore('kv').get(key) : tx.objectStore('kv').put(val, key);
+          r.onsuccess = () => resolve(r.result); r.onerror = () => resolve(null);
+        };
+        req.onerror = () => resolve(null);
+      } catch { resolve(null); }
+    });
+  }
+  async function ensureFolderPermission() {
+    if (!dirHandle) return false;
+    try {
+      if ((await dirHandle.queryPermission({ mode: 'readwrite' })) === 'granted') return true;
+      return (await dirHandle.requestPermission({ mode: 'readwrite' })) === 'granted'; // needs a click; Talk/Replay provide one
+    } catch { return false; }
+  }
+  function scheduleSave(now = false) {
+    if (!dirHandle || !unsavedChanges()) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveToFolder, now ? 0 : 15000);
+  }
+  // Saves run one at a time and each writes the latest state. Overlapping saves used to leave an older version on disk.
+  function saveToFolder() { saveChain = saveChain.then(writeSession, writeSession); return saveChain; }
+  async function writeSession() {
+    if (!dirHandle || !S.utterances.length || !unsavedChanges()) return;
+    const r = rev, sessionId = S.id;
+    try {
+      if ((await dirHandle.queryPermission({ mode: 'readwrite' })) !== 'granted') { showAllowSave(); return; }
+      const fh = await dirHandle.getFileHandle(fileName(), { create: true });
+      const w = await fh.createWritable();
+      await w.write(sessionJSON()); await w.close();
+      if (S.id === sessionId) savedRev = r;
+      els.saved.textContent = `saved ${new Date().toLocaleTimeString()} → ${dirHandle.name}/`;
+      if (unsavedChanges()) scheduleSave();
+    } catch (e) { els.saved.textContent = `save failed: ${e.message}`; }
+  }
+  // Chrome can ask again for folder access after a reload; make that impossible to miss.
+  function showAllowSave() {
+    els.saved.innerHTML = `<button type="button" id="allow-save">Allow saving to ${esc(dirHandle.name)}/</button>`;
+    $('allow-save').addEventListener('click', async () => { if (await ensureFolderPermission()) { els.saved.textContent = `saving to ${dirHandle.name}/`; saveToFolder(); } });
+  }
+  setInterval(() => { if (unsavedChanges() && (talking || replaying)) saveToFolder(); }, 30000);
+
+  // =====================================================================
+  // Rendering
+  // =====================================================================
+  function render() {
+    if (!S) return;
+    const n = S.versions.length;
+    const idx = viewIndex ?? n - 1;
+    const v = S.versions[idx];
+    if (!v) {
+      els.view.innerHTML = `<div class="empty">${S.utterances.length
+        ? (els.key.value.trim() ? 'Listening. The first outline appears after your first pause.' : 'Listening. Add your OpenRouter key above to get an outline.')
+        : 'Press Talk and start thinking out loud. Your main points will appear here.'}</div>`;
+    } else {
+      const prev = S.versions[idx - 1];
+      const prevById = new Map((prev?.points || []).map((p) => [p.id, p]));
+      const now = Date.now();
+      const age = idx === n - 1 ? now - v.receivedAt : Infinity;
+      const retired = (prev?.points || []).filter((p) => !v.points.some((q) => q.id === p.id)); // sessions saved before `removed`
+      els.view.innerHTML = `<div class="vnav">
+          <button id="v-prev" ${idx <= 0 ? 'disabled' : ''} aria-label="Previous version">◀</button>
+          <span>Version ${idx + 1} of ${n} · ${fmtTime(v.at)} · ${esc(shortModel(v.model))}</span>
+          <button id="v-next" ${idx >= n - 1 ? 'disabled' : ''} aria-label="Next version">▶</button>
+          ${viewIndex != null && idx < n - 1 ? '<button id="v-latest">Latest</button>' : ''}
+          <span class="changes">${esc(v.changes)}</span>
+        </div>
+        <ol class="points" style="margin-top:10px">${v.points.map((p, i) => {
+          const old = prevById.get(p.id);
+          const status = !prev ? '' : !old ? 'new' : (old.title !== p.title || old.summary !== p.summary || old.bullets.join('|') !== p.bullets.join('|')) ? 'updated' : '';
+          const fresh = status && age < 6000 ? ` fresh" style="animation-delay:-${age}ms` : '';
+          return `<li class="point${fresh}"><span class="num">${i + 1}</span>
+            <h2>${esc(p.title)}${status ? `<span class="badge">${status}</span>` : ''}</h2>
+            <p class="sum">${esc(p.summary)}</p>
+            ${p.bullets.length ? `<ul>${p.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}</li>`;
+        }).join('')}</ol>
+        ${v.removed ? v.removed.map((r) => `<p class="retired">Removed: ${esc(r.point.title)} <span class="meta">(${esc(r.reason)})</span>${idx === n - 1 ? ` <button type="button" class="undo" data-id="${esc(r.id)}">Undo</button>` : ''}</p>`).join('')
+          : retired.length ? `<p class="retired">Folded in or dropped since the last version: ${retired.map((p) => esc(p.title)).join('; ')}</p>` : ''}`;
+      els.view.querySelectorAll('.undo').forEach((b) => b.addEventListener('click', () => undoRemoval(b.dataset.id)));
+      $('v-prev')?.addEventListener('click', () => { viewIndex = idx - 1; render(); });
+      $('v-next')?.addEventListener('click', () => { viewIndex = idx + 1 >= n - 1 ? null : idx + 1; render(); });
+      $('v-latest')?.addEventListener('click', () => { viewIndex = null; render(); });
+      if (age < 6000) setTimeout(render, 1000);
+    }
+    renderTail();
+    renderInfo();
+    if (els.debug.open) {
+      const nearBottom = els.transcript.scrollHeight - els.transcript.scrollTop - els.transcript.clientHeight < 40;
+      els.transcript.innerHTML = S.utterances.map((u, i) => `<div class="utt"><span class="meta">${i + 1} · ${fmtTime(u.t)}</span>${esc(u.text)}</div>`).join('');
+      if (nearBottom) els.transcript.scrollTop = els.transcript.scrollHeight;
+    }
+  }
+  // What's been said since the last outline, so you can see it's being captured.
+  function renderTail() {
+    const since = S.utterances.slice(lastSentUtt);
+    const live = talking ? `${buffer} ${interim}`.trim() : '';
+    els.tail.hidden = !since.length && !live;
+    els.tail.innerHTML = `<div class="meta">${since.length ? `Not in the outline yet (${since.length})${inFlight ? ' · updating…' : ''}` : 'Hearing…'}</div>`
+      + since.slice(-3).map((u) => `<div>${esc(u.text)}</div>`).join('')
+      + (live ? `<div class="interim">${esc(live)}</div>` : '');
+  }
+  function renderInfo(state) {
+    const v = latest();
+    const bits = [];
+    if (state) bits.push(state);
+    else if (v) bits.push(`updated ${fmtTime(Date.now() - v.receivedAt)} ago`, secs(v.ms));
+    if (S.cost) bits.push(`$${S.cost.toFixed(3)} this session`);
+    els.refreshInfo.textContent = bits.join(' · ');
+  }
+  setInterval(() => { if (S && !inFlight) renderInfo(); }, 5000);
+  function logCall(rec, user, raw) {
+    const d = document.createElement('details');
+    const u = rec.usage ? ` · ${rec.usage.prompt_tokens ?? '?'} in / ${rec.usage.completion_tokens ?? '?'} out${rec.usage.cost ? ` · $${rec.usage.cost.toFixed(4)}` : ''}` : '';
+    d.innerHTML = `<summary class="${rec.error ? 'bad' : ''}">${fmtTime(rec.at)} ${esc(shortModel(rec.model))} ${secs(rec.ms)} · utterances 1–${rec.upto}${u}${rec.error ? ` → ${esc(rec.error)}` : ''}</summary><pre>IN:\n${esc(user)}\n\nOUT:\n${esc(raw || rec.error)}</pre>`;
+    const nearBottom = els.log.scrollHeight - els.log.scrollTop - els.log.clientHeight < 40;
+    els.log.appendChild(d);
+    if (nearBottom) els.log.scrollTop = els.log.scrollHeight;
+  }
+
+  // =====================================================================
+  // Startup + wiring
+  // =====================================================================
+  async function loadModels() {
+    const pick = lsGet('mirror-cloud.model') || DEFAULT_MODEL;
+    let ids = FALLBACK_MODELS;
+    try { // public list, no key needed
+      const r = await fetch(`${OPENROUTER}/models`);
+      const d = await r.json();
+      const found = d.data.map((m) => m.id).filter((id) => /^(anthropic\/claude|google\/gemini)/.test(id) && !/:|image|preview|-lite/.test(id));
+      if (found.length) ids = found;
+    } catch {}
+    if (!ids.includes(pick)) ids = [pick, ...ids];
+    els.model.innerHTML = ids.map((id) => `<option value="${esc(id)}"${id === pick ? ' selected' : ''}>${esc(id)}</option>`).join('');
+  }
+
+  let framed; try { framed = window.self !== window.top; } catch { framed = true; }
+  $('framed').hidden = !framed;
+  els.pillSpeech.textContent = SR ? 'Speech: ok' : 'Speech: unsupported';
+  els.pillSpeech.className = `pill ${SR ? 'ok' : 'bad'}`;
+  if (!SR) els.talk.disabled = true;
+
+  els.talk.addEventListener('click', () => (talking ? stopTalking() : startTalking()));
+  els.refresh.addEventListener('click', () => { if (!inFlight) { clearTimeout(refreshTimer); refresh(); } });
+  els.replay.addEventListener('click', () => els.replayFile.click());
+  els.replayFile.addEventListener('change', async () => {
+    const f = els.replayFile.files[0]; els.replayFile.value = '';
+    if (!f) return;
+    await ensureFolderPermission();
+    replayFile(f).catch((e) => setStatus(`Replay failed: ${e.message}`, true));
+  });
+  els.stopReplay.addEventListener('click', () => { replaying = false; });
+  els.newBtn.addEventListener('click', () => {
+    if (S.utterances.length && unsavedChanges() && !confirm('Start a new session? This one has unsaved changes (download it first if you want to keep it).')) return;
+    newSession('live');
+    els.timer.textContent = '0:00';
+    setStatus('');
+  });
+  els.download.addEventListener('click', () => {
+    const blob = new Blob([sessionJSON()], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = fileName(); a.click(); URL.revokeObjectURL(a.href);
+    if (!dirHandle) savedRev = rev;
+  });
+  els.folder.addEventListener('click', async () => {
+    if (!window.showDirectoryPicker) { setStatus('This browser cannot save to a folder; use Download session.', true); return; }
+    try {
+      dirHandle = await showDirectoryPicker({ id: 'mirror-sessions', mode: 'readwrite' });
+      await idb('put', 'dir', dirHandle);
+      els.saved.textContent = `saving to ${dirHandle.name}/`;
+      dirty(); scheduleSave(true);
+    } catch (e) { if (e.name !== 'AbortError') setStatus(`Couldn't use that folder: ${e.message}`, true); }
+  });
+  // The key is kept only in this browser's localStorage, for this local prototype.
+  els.key.value = lsGet('mirror-cloud.key') || '';
+  els.key.addEventListener('input', () => { lsSet('mirror-cloud.key', els.key.value.trim()); render(); });
+  els.model.addEventListener('change', () => lsSet('mirror-cloud.model', els.model.value));
+  els.topic.value = lsGet('mirror.topic') || '';
+  els.topic.addEventListener('input', () => { lsSet('mirror.topic', els.topic.value); if (S) S.topic = els.topic.value.trim(); });
+  els.debug.addEventListener('toggle', render);
+
+  newSession('live');
+  loadModels();
+  idb('get', 'dir').then((h) => { if (h) { dirHandle = h; els.saved.textContent = `sessions save to ${h.name}/`; } });
+})();
+</script>
+</body>
+</html>
