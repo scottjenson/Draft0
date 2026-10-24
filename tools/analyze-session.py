@@ -1,4 +1,5 @@
-"""Print a readable summary of a saved Mirror session (session-*.json from mirror.html or mirror-cloud.html).
+"""Print a readable summary of a saved session (session-cloud-*.json from draft0.html; older session-*.json from the
+retired on-device prototype, see the nano-prototype tag).
 
 Usage:  python3 -I tools/analyze-session.py sessions/<file>.json [--all-versions]
 """

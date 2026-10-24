@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mirror Cloud</title>
+<title>Draft0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Mirror Cloud: talk, and a cloud model keeps a live outline of what you've said.
+/* Draft0: talk, and a model keeps a live outline of what you've said. The goal is fully on-device;
+   the cloud model (OpenRouter) is a stand-in while the UX is worked out.
    Speech stays on-device (Web Speech API). At pauses (max once per 30 s, or at once for an edit) the current outline,
    a few earlier utterances and the new ones go to a model via OpenRouter, which returns only the points that changed.
    Every version is kept. */
@@ -101,14 +102,14 @@ input[type=text], input[type=password] { font: 400 0.86rem var(--font-body); pad
 <body>
 <div class="wrap">
   <header>
-    <h1>Mirror</h1>
+    <h1>Draft0</h1>
     <span class="meta">cloud outline</span>
     <span class="pill" id="pill-speech">Speech</span>
     <span class="spacer"></span>
     <span class="meta" id="saved"></span>
   </header>
 
-  <div class="framed" id="framed" hidden>This page is inside a frame, so Chrome blocks the microphone. Open it directly: run <code>python3 -m http.server</code> in its folder and visit <code>http://localhost:8000/mirror-cloud.html</code>.</div>
+  <div class="framed" id="framed" hidden>This page is inside a frame, so Chrome blocks the microphone. Open it directly: run <code>python3 -m http.server</code> in its folder and visit <code>http://localhost:8000/draft0.html</code>.</div>
 
   <div class="bar">
     <button id="talk" type="button"><span class="dot"></span><span id="talk-label">Talk</span></button>
@@ -289,7 +290,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
       const res = await fetch(`${OPENROUTER}/chat/completions`, {
         method: 'POST',
         signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
-        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Title': 'Mirror (local prototype)' },
+        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Title': 'Draft0 (local prototype)' },
         body: JSON.stringify({
           model,
           messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: user }],
@@ -471,7 +472,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
 
   // =====================================================================
   // Saving: download, or auto-save into a folder the user picked (File System Access API).
-  // Shares the folder choice with mirror.html (same origin, same IndexedDB).
+  // Storage names (IndexedDB 'mirror', localStorage 'mirror-cloud.*') predate the rename; kept so saved settings carry over.
   // =====================================================================
   let dirHandle = null, saveTimer = null, saveChain = Promise.resolve();
   let rev = 0, savedRev = 0; // rev counts changes; a save records the rev it wrote, so a change made mid-save is never lost

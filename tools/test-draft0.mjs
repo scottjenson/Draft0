@@ -1,18 +1,18 @@
-// Headless smoke test for mirror-cloud.html: runs the page's own script in jsdom with a fake OpenRouter and a
+// Headless smoke test for draft0.html: runs the page's own script in jsdom with a fake OpenRouter and a
 // fake save folder (slow writes, to catch overlapping-save bugs), replays a transcript in Fast mode, and checks
 // patch-style updates (unchanged points kept, removals undoable), stable/retired ids, the saved file, and the
 // "Allow saving" permission button.
-// Usage (from tools/, after `npm install`):  node test-mirror-cloud.mjs [../ubuntu.txt]
+// Usage (from tools/, after `npm install`):  node test-draft0.mjs [ubuntu.txt]
 import { JSDOM } from 'jsdom';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const replayPath = path.resolve(process.argv[2] || path.join(ROOT, 'ubuntu.txt'));
-const html = fs.readFileSync(path.join(ROOT, 'mirror-cloud.html'), 'utf8');
+const replayPath = path.resolve(process.argv[2] || path.join(ROOT, 'tools', 'ubuntu.txt'));
+const html = fs.readFileSync(path.join(ROOT, 'draft0.html'), 'utf8');
 const script = html.match(/<script>\n([\s\S]*)<\/script>/)[1];
-const dom = new JSDOM(html.replace(/<script>[\s\S]*<\/script>/, ''), { runScripts: 'outside-only', pretendToBeVisual: true, url: 'http://localhost:8000/mirror-cloud.html' });
+const dom = new JSDOM(html.replace(/<script>[\s\S]*<\/script>/, ''), { runScripts: 'outside-only', pretendToBeVisual: true, url: 'http://localhost:8000/draft0.html' });
 const w = dom.window;
 w.AbortSignal = globalThis.AbortSignal; w.confirm = () => true; w.webkitSpeechRecognition = function () {};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
