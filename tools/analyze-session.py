@@ -21,11 +21,15 @@ def cloud(S, all_versions):
     for k, v in enumerate(shown):
         n = S['versions'].index(v) + 1
         print(f"\n=== VERSION {n}/{len(S['versions'])} at {v['at'] / 1000:.0f}s, utterances 1-{v['upto']}, "
-              f"{v['model']}, {v['ms'] / 1000:.1f}s | {v.get('changes', '')}")
+              f"{v['model']}, {v['ms'] / 1000:.1f}s{' DISTILL' if v.get('distill') else ''} | {v.get('changes', '')}")
         for p in v['points']:
             print(f"  [{p['id']}] {p['title']} | {p['summary']}")
             for b in p['bullets']:
                 print(f"        - {b}")
+        for label, key in (('Answered', 'answered'), ('Open question', 'questions'), ('Loose end', 'looseEnds'), ('Left out', 'leftOut')):
+            for x in v.get(key) or []:
+                text = x['text'] + (f" -> {x['answer']}" if 'answer' in x else '') if isinstance(x, dict) else x
+                print(f"  {label}: {text}")
 
 
 def nano(S):

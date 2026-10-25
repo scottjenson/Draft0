@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nano Bench</title>
+<style>
+/* Nano bench: can on-device Gemini Nano keep the outline (place utterances, carry out spoken edits) if code holds
+   the structure? Replays a saved draft0 session through a local pipeline and shows it next to what the cloud model did.
+   Guardrails: Nano returns operations, never the outline; code checks and applies them. It sees only a shortlist of
+   points (chosen by embeddings). Removals, merges and revisions need a spoken cue. A point is tidied on its own when
+   it grows. Strategy and questions are left to Distill (cloud). */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --ink: #17202b; --muted: #5d6877; --line: #dde2e9;
+  --accent: #2c4fd6; --accent-ink: #ffffff; --bad: #d33a2c; --ok: #1f8a4c; --warn: #b26a00; --chip: #eaeefb;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151b; --surface: #1a2029; --ink: #e7ebf1; --muted: #9aa5b4; --line: #2b3440;
+    --accent: #7e9bff; --accent-ink: #0d1220; --bad: #ff6a5c; --ok: #4cc782; --warn: #f0a742; --chip: #232c3d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151b; --surface: #1a2029; --ink: #e7ebf1; --muted: #9aa5b4; --line: #2b3440;
+  --accent: #7e9bff; --accent-ink: #0d1220; --bad: #ff6a5c; --ok: #4cc782; --warn: #f0a742; --chip: #232c3d;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink); font: 14px/1.5 system-ui, sans-serif; }
+h1 { font-size: 1.25rem; margin: 0 8px 0 0; }
+header, .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 10px; }
+.bar { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+button, select { font: 600 0.85rem/1 system-ui, sans-serif; border-radius: 8px; padding: 7px 11px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.pill { font: 500 0.72rem/1 ui-monospace, Menlo, monospace; padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+.pill.ok { color: var(--ok); } .pill.bad { color: var(--bad); } .pill.warn { color: var(--warn); }
+.meta { font: 0.78rem ui-monospace, Menlo, monospace; color: var(--muted); }
+.spacer { flex: 1; }
+input[type=range] { flex: 1; min-width: 160px; }
+.utt { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; }
+.utt.cmd { border-left-color: var(--warn); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; align-items: start; }
+.col { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; min-width: 0; }
+.col h2 { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.points { padding-left: 1.3em; margin: 0; } .points > li { margin-bottom: 8px; }
+.points h4 { margin: 0; font-size: 0.95rem; } .points p { margin: 1px 0; color: var(--muted); }
+.points ul { margin: 2px 0; padding-left: 1.1em; font-size: 0.9rem; }
+.ops { font: 0.78rem/1.45 ui-monospace, Menlo, monospace; }
+.ops div { margin-bottom: 4px; overflow-wrap: anywhere; }
+.ops .bad { color: var(--bad); } .ops .warn { color: var(--warn); } .ops .ok { color: var(--ok); }
+details summary { cursor: pointer; color: var(--muted); }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 0.72rem/1.4 ui-monospace, Menlo, monospace; background: var(--bg); border-radius: 6px; padding: 6px; max-height: 260px; overflow: auto; }
+.empty { color: var(--muted); font-style: italic; }
+.status { color: var(--muted); font-size: 0.85rem; min-height: 1.3em; margin-bottom: 8px; }
+.status.err { color: var(--bad); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Nano bench</h1>
+  <span class="pill" id="pill-nano">Nano</span>
+  <span class="pill" id="pill-embed">Embeddings: not loaded</span>
+  <span class="spacer"></span>
+  <span class="meta" id="stats"></span>
+</header>
+
+<div class="bar">
+  <input type="file" id="file" accept=".json,application/json" hidden>
+  <button id="load" type="button">Load session…</button>
+  <span class="meta" id="loaded">No session loaded</span>
+  <span class="spacer"></span>
+  <button id="run" type="button" class="primary" disabled>Replay with Nano</button>
+  <button id="step" type="button" disabled>Step</button>
+  <button id="edits" type="button" disabled title="Each spoken edit, applied by Nano to the cloud outline as it was at that moment">Edit cases</button>
+  <button id="stop" type="button" hidden>Stop</button>
+  <button id="download" type="button" disabled>Download results</button>
+</div>
+
+<div class="bar">
+  <span class="meta">Utterance</span>
+  <input type="range" id="scrub" min="1" max="1" value="1" disabled>
+  <span class="meta" id="pos">–</span>
+</div>
+
+<div class="status" id="status" role="status"></div>
+<div class="utt" id="utt" hidden></div>
+
+<div class="grid">
+  <section class="col"><h2 id="left-head">Nano (local)</h2><div id="left"></div></section>
+  <section class="col"><h2 id="right-head">Cloud (from the session)</h2><div id="right"></div></section>
+  <section class="col"><h2>Nano operations for this utterance</h2><div class="ops" id="ops"></div></section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const els = { nano: $('pill-nano'), embedPill: $('pill-embed'), stats: $('stats'), load: $('load'), file: $('file'), loaded: $('loaded'),
+    run: $('run'), step: $('step'), edits: $('edits'), stop: $('stop'), download: $('download'), scrub: $('scrub'), pos: $('pos'),
+    status: $('status'), utt: $('utt'), left: $('left'), right: $('right'), ops: $('ops'), leftHead: $('left-head'), rightHead: $('right-head') };
+
+  // ---------- config ----------
+  const CALL_TIMEOUT_MS = 45000;
+  const SHORTLIST = 3;          // points Nano sees when placing an utterance (closest by embedding)
+  const MAX_POINTS = 8;         // beyond this, a "new" point is added to the closest point instead
+  const TIDY_OVER = 5;          // a point with more bullets than this is tidied
+  const CLASSIFY_BATCH = 8;     // bullets per call when sorting into the speaker's categories
+  const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6';
+  const EMBED_MODEL = 'Xenova/all-MiniLM-L6-v2';
+  const LM_OPTS = { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] };
+  // Same cue as draft0: sounds like an edit to the outline. Plus a cue for a change of mind, the only signal that may replace a bullet.
+  const EDIT_CUE = /\b(points? (number )?(one|two|three|four|five|six|seven|eight|\d)|combine|merge|collapse|get rid of|delete|remove|rename|call (it|that|those|this|them)|misspell|spell(ed|ing)|change that|scratch that|reorgani[sz]e)\b/i;
+  const REVISION_CUE = /\b(actually|on second thought|scratch that|i('m| am) wrong|no wait|changed my mind|instead)\b/i;
+
+  const PROMPTS = {
+    place: `You help keep an outline of what someone says while thinking out loud. You get a few points of the outline (numbered, with their bullets) and one new utterance, with the utterance before it for context only. Decide where the ideas in the new utterance go.
+
+For each distinct idea in the new utterance (usually one, at most three), return one op:
+- add: a new bullet for an existing point. point = its number; bullet = the idea as a short statement.
+- new: a main topic that none of these points covers. title = a short title (2 to 5 words); bullet = the idea.
+- revise: the speaker changed their mind about an existing bullet. point = its number; replaces = the bullet's number; bullet = their new position.
+- skip: filler, an aside, or talk about the session or the tool. Nothing goes in the outline.
+
+Write bullets crisply in plain language, using the speaker's terms and fixing obvious speech-recognition errors. Do not add ideas of your own. Use 0 for numbers that don't apply and "" for text that doesn't apply.`,
+    tidy: `You tidy one point of an outline that was built up while someone thought out loud. You get its title and its bullets, in the order they were added. Return the point tidied: a short title, a one-sentence summary, and at most 4 bullets.
+- Merge bullets that say the same thing.
+- When a later bullet replaces an earlier position, keep only the later one.
+- Keep names, numbers and specifics.
+- Do not add ideas of your own.`,
+    command: `The speaker is giving an instruction about their outline. You get the outline (numbered points with their titles) and what they said. Return the operations that carry it out:
+- merge: combine points. points = their numbers (the first is kept); title = a new title, or "" to keep the first one's.
+- remove: points = the numbers to take out.
+- rename: points = [the number]; title = the new title.
+- reorganize: they want the outline organized around categories they name. categories = those names, in their words.
+- tidy: they want points cleaned up (repeats collapsed, shortened). points = the numbers they mean, or [] for all.
+- respell: they correct a name or spelling. find = the wrong text as it appears in the outline; replace = the correct text.
+- none: it is not an instruction about the outline after all.
+Use only point numbers that exist. If unsure, return none. Use [] and "" for fields that don't apply.`,
+    classify: `You sort outline bullets into categories the speaker named. You get the categories (numbered) and the bullets (numbered). For each bullet, in order, give the number of the category it belongs to, or 0 if it fits none of them.`,
+  };
+  const S_INT = { type: 'integer' }, S_STR = { type: 'string' };
+  const SCHEMAS = {
+    place: { type: 'object', required: ['ops'], properties: { ops: { type: 'array', maxItems: 3, items: { type: 'object', required: ['action', 'point', 'title', 'bullet', 'replaces'],
+      properties: { action: { type: 'string', enum: ['add', 'new', 'revise', 'skip'] }, point: S_INT, title: S_STR, bullet: S_STR, replaces: S_INT } } } } },
+    tidy: { type: 'object', required: ['title', 'summary', 'bullets'], properties: { title: S_STR, summary: S_STR, bullets: { type: 'array', maxItems: 4, items: S_STR } } },
+    command: { type: 'object', required: ['ops'], properties: { ops: { type: 'array', maxItems: 3, items: { type: 'object', required: ['action', 'points', 'title', 'categories', 'find', 'replace'],
+      properties: { action: { type: 'string', enum: ['merge', 'remove', 'rename', 'reorganize', 'tidy', 'respell', 'none'] }, points: { type: 'array', items: S_INT }, title: S_STR,
+        categories: { type: 'array', items: S_STR }, find: S_STR, replace: S_STR } } } } },
+    classify: { type: 'object', required: ['assign'], properties: { assign: { type: 'array', items: S_INT } } },
+  };
+
+  // ---------- helpers ----------
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const setStatus = (msg, err = false) => { els.status.textContent = msg; els.status.classList.toggle('err', err); };
+  const dot = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
+  const clone = (pts) => pts.map((p) => ({ ...p, bullets: [...p.bullets] }));
+  const pointText = (p) => [p.title, p.summary, ...p.bullets].filter(Boolean).join('. ');
+  const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+
+  // ---------- state ----------
+  let session = null;  // the loaded draft0 session
+  let run = null;      // { mode, steps: [{ i, points, ops, calls }], calls: [] }
+  let stopping = false, busy = false;
+  let points = [], nextId = 1, stepLog = [];
+  const log = (cls, msg) => stepLog.push({ cls, msg });
+
+  // ---------- Nano ----------
+  const bases = {};
+  async function sessionFor(task) {
+    if (!bases[task]) bases[task] = await LanguageModel.create({ ...LM_OPTS, initialPrompts: [{ role: 'system', content: PROMPTS[task] }] });
+    return bases[task].clone ? bases[task].clone() : LanguageModel.create({ ...LM_OPTS, initialPrompts: [{ role: 'system', content: PROMPTS[task] }] });
+  }
+  async function nano(task, user) {
+    const rec = { task, user, raw: null, ms: 0, error: null };
+    const t0 = performance.now();
+    let s, parsed = null;
+    try {
+      s = await sessionFor(task);
+      rec.raw = await s.prompt(user, { responseConstraint: SCHEMAS[task], signal: AbortSignal.timeout(CALL_TIMEOUT_MS) });
+      parsed = JSON.parse(rec.raw);
+    } catch (e) {
+      rec.error = `${e.name}: ${e.message}`;
+      if (e.name !== 'TimeoutError' && !rec.raw) { bases[task]?.destroy?.(); delete bases[task]; } // recreate on odd failures
+    } finally { s?.destroy?.(); }
+    rec.ms = performance.now() - t0;
+    run.calls.push(rec);
+    if (rec.error) log('bad', `${task}: ${rec.error}`);
+    return parsed;
+  }
+
+  // ---------- embeddings (shortlist only; cached by text) ----------
+  let extractor = null;
+  const embCache = new Map();
+  async function embed(texts) {
+    if (window.EMBED_OVERRIDE) return window.EMBED_OVERRIDE(texts); // headless test
+    if (!extractor) {
+      els.embedPill.textContent = 'Embeddings: loading…'; els.embedPill.className = 'pill warn';
+      const { pipeline } = await import(TRANSFORMERS_URL);
+      extractor = await pipeline('feature-extraction', EMBED_MODEL, { dtype: 'q8' });
+      els.embedPill.textContent = 'Embeddings: ready'; els.embedPill.className = 'pill ok';
+    }
+    return (await extractor(texts, { pooling: 'mean', normalize: true })).tolist();
+  }
+  async function embedCached(texts) {
+    const missing = [...new Set(texts.filter((t) => !embCache.has(t)))];
+    if (missing.length) (await embed(missing)).forEach((v, i) => embCache.set(missing[i], v));
+    return texts.map((t) => embCache.get(t));
+  }
+
+  // ---------- pipeline ----------
+  const newPoint = (title, bullets) => ({ id: `n${nextId++}`, title: title || 'Untitled', summary: '', bullets });
+  async function shortlist(text) {
+    if (points.length <= SHORTLIST) return points.map((p) => ({ p, sim: null }));
+    const [u, ...ps] = await embedCached([text, ...points.map(pointText)]);
+    return points.map((p, i) => ({ p, sim: dot(u, ps[i]) })).sort((a, b) => b.sim - a.sim).slice(0, SHORTLIST);
+  }
+
+  async function place(i) {
+    const text = session.utterances[i].text, before = session.utterances[i - 1]?.text;
+    const list = await shortlist(text);
+    const shown = list.map((x, k) => ({ n: k + 1, p: x.p, sim: x.sim }));
+    if (list.length && list[0].sim != null) log('', `shortlist: ${shown.map((x) => `${x.p.title} (${x.sim.toFixed(2)})`).join(', ')}`);
+    const user = `${session.topic ? `Topic: ${session.topic}\n\n` : ''}Outline points:\n${shown.length ? shown.map((x) => `${x.n}. ${x.p.title}${x.p.summary ? ` — ${x.p.summary}` : ''}\n${x.p.bullets.map((b, j) => `   ${j + 1}) ${b}`).join('\n')}`).join('\n') : '(none yet)'}`
+      + (before ? `\n\nPrevious utterance (context only): ${before}` : '') + `\n\nNew utterance: ${text}`;
+    const out = await nano('place', user);
+    const touched = new Set();
+    for (const op of out?.ops || []) {
+      const target = shown.find((x) => x.n === op.point)?.p;
+      let action = op.action;
+      if (action === 'revise' && !REVISION_CUE.test(text)) { log('warn', `revise without a change-of-mind cue → add`); action = 'add'; }
+      if (action === 'revise' && !(target && target.bullets[op.replaces - 1])) { log('warn', `revise of a bullet that doesn't exist → add`); action = 'add'; }
+      if ((action === 'add' || action === 'revise') && !target) { log('warn', `point ${op.point} not in the shortlist → new`); action = 'new'; }
+      if (action === 'new' && points.length >= MAX_POINTS && shown[0]) { log('warn', `already ${MAX_POINTS} points → add to "${shown[0].p.title}"`); action = 'add'; op.point = 1; }
+      const bullet = (op.bullet || '').trim();
+      if (action === 'skip' || !bullet) { log('', `skip${bullet ? '' : ' (empty)'}`); continue; }
+      const p = action === 'new' ? null : shown.find((x) => x.n === op.point).p;
+      if (action === 'new') { const np = newPoint(op.title, [bullet]); points.push(np); touched.add(np); log('ok', `new point "${np.title}": ${bullet}`); }
+      else if (action === 'revise') { log('ok', `revise "${p.title}" bullet ${op.replaces}: ${p.bullets[op.replaces - 1]} → ${bullet}`); p.bullets[op.replaces - 1] = bullet; touched.add(p); }
+      else { p.bullets.push(bullet); touched.add(p); log('ok', `add to "${p.title}": ${bullet}`); }
+    }
+    for (const p of touched) if (p.bullets.length > TIDY_OVER || (!p.summary && p.bullets.length >= 2)) await tidy(p);
+  }
+
+  async function tidy(p) {
+    const out = await nano('tidy', `Title: ${p.title}\nBullets:\n${p.bullets.map((b, j) => `${j + 1}) ${b}`).join('\n')}`);
+    if (!out?.bullets?.length) return;
+    log('ok', `tidy "${p.title}": ${p.bullets.length} → ${out.bullets.length} bullets${out.title && out.title !== p.title ? `, title → "${out.title}"` : ''}`);
+    Object.assign(p, { title: out.title || p.title, summary: out.summary || p.summary, bullets: out.bullets.slice(0, 4) });
+  }
+
+  async function command(text) {
+    const user = `Outline:\n${points.map((p, k) => `${k + 1}. ${p.title}`).join('\n') || '(empty)'}\n\nWhat they said: ${text}`;
+    const out = await nano('command', user);
+    const ops = out?.ops || [];
+    if (!ops.length || ops.every((o) => o.action === 'none')) { log('', 'command: none'); return false; }
+    for (const op of ops) {
+      const valid = [...new Set(op.points || [])].filter((n) => n >= 1 && n <= points.length);
+      const pts = valid.map((n) => points[n - 1]);
+      if ((op.points || []).length !== valid.length) log('warn', `ignored point numbers that don't exist: ${op.points.join(', ')}`);
+      if (op.action === 'merge' && pts.length >= 2) {
+        const [keep, ...rest] = pts;
+        keep.bullets.push(...rest.flatMap((p) => p.bullets));
+        if (op.title) keep.title = op.title;
+        points = points.filter((p) => !rest.includes(p));
+        log('ok', `merge ${valid.join('+')} into "${keep.title}"`);
+        await tidy(keep);
+      } else if (op.action === 'remove' && pts.length) {
+        points = points.filter((p) => !pts.includes(p));
+        log('ok', `remove ${pts.map((p) => `"${p.title}"`).join(', ')}`);
+      } else if (op.action === 'rename' && pts.length === 1 && op.title) {
+        log('ok', `rename "${pts[0].title}" → "${op.title}"`); pts[0].title = op.title;
+      } else if (op.action === 'respell' && op.find) {
+        const re = new RegExp(op.find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        let n = 0;
+        for (const p of points) for (const k of ['title', 'summary']) p[k] = p[k].replace(re, () => (n++, op.replace));
+        for (const p of points) p.bullets = p.bullets.map((b) => b.replace(re, () => (n++, op.replace)));
+        log(n ? 'ok' : 'warn', `respell "${op.find}" → "${op.replace}": ${n} found`);
+      } else if (op.action === 'tidy') {
+        const which = pts.length ? pts : [...points];
+        log('ok', `tidy ${pts.length ? valid.join(', ') : 'all points'}`);
+        for (const p of which) await tidy(p);
+      } else if (op.action === 'reorganize' && op.categories?.length >= 2) {
+        await reorganize(op.categories.slice(0, MAX_POINTS));
+      } else if (op.action !== 'none') log('warn', `couldn't apply ${op.action} ${JSON.stringify(op.points)}`);
+    }
+    return true;
+  }
+
+  // The speaker names the categories; Nano only sorts bullets into them, a few at a time; code rebuilds the points.
+  async function reorganize(categories) {
+    log('ok', `reorganize around: ${categories.join(' / ')}`);
+    const all = points.flatMap((p) => p.bullets);
+    const buckets = categories.map(() => []), general = [];
+    for (let k = 0; k < all.length; k += CLASSIFY_BATCH) {
+      const batch = all.slice(k, k + CLASSIFY_BATCH);
+      const out = await nano('classify', `Categories:\n${categories.map((c, j) => `${j + 1}. ${c}`).join('\n')}\n\nBullets:\n${batch.map((b, j) => `${j + 1}) ${b}`).join('\n')}`);
+      const assign = out?.assign || [];
+      if (assign.length !== batch.length) log('warn', `classify returned ${assign.length} for ${batch.length} bullets; the rest go to General`);
+      batch.forEach((b, j) => { const c = assign[j]; (c >= 1 && c <= categories.length ? buckets[c - 1] : general).push(b); });
+    }
+    points = [...(general.length ? [newPoint('General', general)] : []), ...categories.map((c, j) => newPoint(c, buckets[j])).filter((p) => p.bullets.length)];
+    for (const p of points) await tidy(p);
+  }
+
+  // ---------- runs ----------
+  function begin(mode) {
+    run = { mode, model: 'gemini-nano', session: session.id, startedAt: new Date().toISOString(), steps: [], calls: [] };
+    points = []; nextId = 1; stopping = false; busy = true;
+    els.stop.hidden = false; setButtons();
+  }
+  function end(msg) { busy = false; els.stop.hidden = true; setButtons(); setStatus(msg); renderStats(); }
+
+  async function stepReplay() {
+    const i = run.steps.length;
+    stepLog = [];
+    const text = session.utterances[i].text;
+    const callsBefore = run.calls.length;
+    const isCmd = EDIT_CUE.test(text);
+    if (isCmd) { log('warn', 'edit cue → command'); if (!(await command(text))) await place(i); }
+    else await place(i);
+    run.steps.push({ i, cmd: isCmd, points: clone(points), ops: stepLog, calls: run.calls.slice(callsBefore).map((c) => c.task) });
+    show(i);
+  }
+  async function replay(stepOnly = false) {
+    if (!run || run.mode !== 'replay' || run.steps.length >= session.utterances.length) begin('replay');
+    else { busy = true; stopping = false; els.stop.hidden = false; setButtons(); }
+    const n = session.utterances.length;
+    while (run.steps.length < n && !stopping) {
+      setStatus(`Nano: utterance ${run.steps.length + 1} of ${n}…`);
+      await stepReplay();
+      if (stepOnly) break;
+    }
+    end(run.steps.length >= n ? 'Replay finished.' : `Paused at utterance ${run.steps.length} of ${n}.`);
+  }
+
+  // Edit cases: each utterance with an edit cue, applied by Nano to the cloud outline as the speaker saw it then
+  // (so point numbers mean what they meant), next to what the cloud model did with it.
+  async function editCases() {
+    begin('edits');
+    const cases = session.utterances.map((u, i) => ({ u, i })).filter(({ u }) => EDIT_CUE.test(u.text));
+    for (const { u, i } of cases) {
+      if (stopping) break;
+      setStatus(`Nano: edit case ${run.steps.length + 1} of ${cases.length}…`);
+      stepLog = [];
+      const beforeV = cloudAt(i), afterV = cloudAt(i + 1);
+      points = clone(beforeV?.points || []);
+      const callsBefore = run.calls.length;
+      if (!(await command(u.text))) log('', 'Nano says this is not an edit');
+      run.steps.push({ i, cmd: true, before: clone(beforeV?.points || []), points: clone(points), cloud: afterV?.points || [], ops: stepLog, calls: run.calls.slice(callsBefore).map((c) => c.task) });
+      show(run.steps.length - 1);
+    }
+    end(`Edit cases done: ${run.steps.length} of ${cases.length}.`);
+  }
+
+  // The cloud outline after utterances 1..n (the last version that had seen no more than n utterances).
+  const cloudAt = (n) => session.versions.filter((v) => v.upto <= n).at(-1);
+
+  // ---------- rendering ----------
+  const renderPoints = (pts) => (pts?.length ? `<ol class="points">${pts.map((p) => `<li><h4>${esc(p.title)}</h4>${p.summary ? `<p>${esc(p.summary)}</p>` : ''}<ul>${p.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul></li>`).join('')}</ol>` : '<p class="empty">(empty)</p>');
+  function show(k) {
+    const st = run.steps[k];
+    if (!st) return;
+    els.scrub.disabled = false; els.scrub.max = run.steps.length; els.scrub.value = k + 1;
+    const u = session.utterances[st.i];
+    els.pos.textContent = run.mode === 'edits' ? `edit case ${k + 1} of ${run.steps.length} (utterance ${st.i + 1})` : `${st.i + 1} of ${session.utterances.length}`;
+    els.utt.hidden = false; els.utt.className = `utt${st.cmd ? ' cmd' : ''}`;
+    els.utt.innerHTML = `<span class="meta">${st.i + 1}${st.cmd ? ' · edit cue' : ''}</span> ${esc(u.text)}`;
+    if (run.mode === 'edits') {
+      els.leftHead.textContent = 'Nano applied the edit';
+      els.rightHead.textContent = 'Cloud applied the edit';
+      els.left.innerHTML = renderPoints(st.points) + `<details><summary>Outline before the edit</summary>${renderPoints(st.before)}</details>`;
+      els.right.innerHTML = renderPoints(st.cloud);
+    } else {
+      const v = cloudAt(st.i + 1);
+      els.leftHead.textContent = 'Nano (local)';
+      els.rightHead.textContent = `Cloud (${v ? `version after utterance ${v.upto}` : 'nothing yet'})`;
+      els.left.innerHTML = renderPoints(st.points);
+      els.right.innerHTML = renderPoints(v?.points);
+    }
+    els.ops.innerHTML = (st.ops.map((o) => `<div class="${o.cls}">${esc(o.msg)}</div>`).join('') || '<div class="empty">(none)</div>')
+      + `<div class="meta">calls: ${st.calls.join(', ') || 'none'}</div>`;
+    renderStats();
+  }
+  function renderStats() {
+    if (!run) return;
+    const by = {};
+    for (const c of run.calls) (by[c.task] ||= []).push(c.ms);
+    const errs = run.calls.filter((c) => c.error).length;
+    els.stats.textContent = Object.entries(by).map(([t, ms]) => `${t} ${ms.length}× ${(avg(ms) / 1000).toFixed(1)}s`).join(' · ') + (errs ? ` · ${errs} errors` : '');
+  }
+  function setButtons() {
+    const ready = !!session && !busy && els.nano.dataset.ok === '1';
+    els.run.disabled = els.edits.disabled = !ready;
+    els.step.disabled = !ready || (run?.mode === 'replay' && run.steps.length >= session.utterances.length);
+    els.download.disabled = !run || busy;
+    els.load.disabled = busy;
+  }
+
+  // ---------- wiring ----------
+  els.load.addEventListener('click', () => els.file.click());
+  els.file.addEventListener('change', async () => {
+    const f = els.file.files[0]; els.file.value = '';
+    if (!f) return;
+    try {
+      const j = JSON.parse(await f.text());
+      if (!j.utterances?.length || !j.versions) throw new Error('not a draft0 session (needs utterances and versions)');
+      session = j; run = null;
+      const cases = j.utterances.filter((u) => EDIT_CUE.test(u.text)).length;
+      els.loaded.textContent = `${f.name}: ${j.utterances.length} utterances, ${j.versions.length} cloud versions, ${cases} edit cues`;
+      els.left.innerHTML = els.right.innerHTML = els.ops.innerHTML = ''; els.utt.hidden = true; els.scrub.disabled = true; els.pos.textContent = '–';
+      setStatus('');
+    } catch (e) { setStatus(`Couldn't load: ${e.message}`, true); }
+    setButtons();
+  });
+  const guard = (fn) => () => fn().catch((e) => { end(`Failed: ${e.message}`); setStatus(`Failed: ${e.message}`, true); });
+  els.run.addEventListener('click', guard(() => replay(false)));
+  els.step.addEventListener('click', guard(() => replay(true)));
+  els.edits.addEventListener('click', guard(editCases));
+  els.stop.addEventListener('click', () => { stopping = true; setStatus('Stopping after this utterance…'); });
+  els.scrub.addEventListener('input', () => show(+els.scrub.value - 1));
+  els.download.addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(run, null, 2)], { type: 'application/json' }));
+    a.download = `nano-bench-${run.mode}-${run.startedAt.replace(/[:.]/g, '-')}.json`;
+    a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  (async () => {
+    if (!('LanguageModel' in self)) { els.nano.textContent = 'Nano: missing'; els.nano.className = 'pill bad'; setStatus('This browser has no Prompt API (LanguageModel). Use desktop Chrome with Gemini Nano.', true); return; }
+    const a = await LanguageModel.availability(LM_OPTS).catch(() => 'error');
+    els.nano.textContent = `Nano: ${a}`;
+    els.nano.className = `pill ${a === 'available' ? 'ok' : a === 'unavailable' || a === 'error' ? 'bad' : 'warn'}`;
+    els.nano.dataset.ok = a === 'available' ? '1' : '';
+    if (a !== 'available') setStatus(`Nano is "${a}". It must be "available" (downloaded) to run.`, true);
+    setButtons();
+  })();
+})();
+</script>
+</body>
+</html>

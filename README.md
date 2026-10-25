@@ -10,7 +10,7 @@ You can ramble quite a bit, and it will collect the ideas together so you can in
 
 This version uses a local speech to text engine to capture all the text, but it does use a cloud model to process that text. That's clearly against the goal, but I am trying to validate the UX concept first and not fight local models that aren't ready yet. Once I've determined that this is actually a good idea and working well, I will try to find a way of using better local models.
 
-I did try using the included local model in Chrome, Google Nano, and it was just not up to the task. hat's why I ended up switching to a cloud model as a temporary workaround to just validate the UX model. 
+I did try using the included local model in Chrome, Google Nano, and it was just not up to the task. 
 
 The original suboptimal on-device prototype is preserved at the git tag [`nano-prototype`](../../tree/nano-prototype).
 

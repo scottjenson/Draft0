@@ -5,10 +5,18 @@ Running log for picking up after lost context. The goal is in `../README.md` (en
 **Keep it compact:** under ~80 lines. Edit or replace entries rather than appending; delete what's no longer true. One line per finding.
 
 ## Current state (2026-10-24)
+- **Small models have their own file, `docs/SMALL-MODELS.md`.** Read it before any local-model work.
 - **`draft0.html`** (was `mirror-cloud.html`): on-device speech → utterances; outline from a cloud model via OpenRouter (default `anthropic/claude-sonnet-5.5`, json_schema structured output). Headless test: `tools/test-draft0.mjs`.
 - **Request:** current outline (with displayed `point` numbers), retired ids, the last 4 already-outlined utterances as context only, and the new utterances. Input stays flat at about 2.6k tokens.
 - **Response (patch):** `updated` (changed or new points, complete), `removed` (id + reason), `order`, `changes`. Code applies it and keeps every other point verbatim. A point can only vanish via `removed`; removals show with an Undo (a new version, model `undo`). Retired ids are never resurrected.
 - **Cadence:** a refresh at a pause, at most every 30 s; an edit-like phrase (`EDIT_CUE`: "point two", combine, collapse, delete, spelled…) refreshes at once. Stop refreshes only if something is new. Talk continues the session on screen, including a replay (New clears it); `liveFrom` marks the first live utterance.
+- **Topic is guessed, not typed:** the response has a `topic` field, filled on the first outline (empty after unless clearly wrong). It shows as an editable heading; a typed correction wins and is sent as "from the speaker". Replays no longer carry a saved topic over, so they test the guess. Untested live.
+- **Calm UI:** only Talk, timer and New session up top; key, model, replay, saving, transcript and calls sit in a "Tools & debug" twisty (opens itself when no key is saved).
+- **Distill (button, or say "distill" / "clean this up"):** separate prompt (`DISTILL`), an opinionated mirror. Points in the last distill are `existing` (inertia: may be added to, never reworked; overlaps come back as questions for a voice edit); everything since is `new` and fair game. First distill sends the whole transcript, later ones only what's new since. Same patch format.
+- **Open questions** sit above the outline. Only Distill adds them (≤4); a live update clears one the speaker answers (`answered`, shown struck through with the answer for that version). Loose ends and "Left out" stay below the outline.
+- **Distill runs 1–2 (contradictory planning ramble replayed + live, 58 utterances, $0.52):** Sonnet distills stay moderate even with the bolder prompt (bullets 23→18, 23→16, 38→31; inertia respected, overlaps asked as questions). Big restructures came from spoken commands ("reorganize around these four items", "collapse the repeats"). **Dynamic questions worked:** 12 answered live, each struck through with a correct answer; Distill's questions drove most of the speaker's later utterances. Gemini Argon calls returned no usage, so session cost undercounts.
+- **Voice vs Distill:** restructuring by voice works when the speaker knows the shape; Distill's job is what voice can't do: ask the questions, clear duplicates and clutter, propose a shape.
+- **Distill by model:** only Opus and Gemini Argon caught a real gap (one of four items lacked a detail the others had) and led with the overall strategy; Sonnet and Haiku were tactical. Cost per distill: Haiku $0.002, Argon $0.02, Sonnet $0.03–0.04, Opus $0.08. Argon once wrote a Hindi word mid-sentence. Details: `SMALL-MODELS.md`.
 - Every version is kept (◀/▶ history). Sessions auto-save to a picked folder (`sessions/`, git-ignored) or download as JSON.
 - Retired at the `nano-prototype` tag: the on-device pipeline (`mirror.html`), the batch test bench, the original prototype and HANDOFF.md.
 - Environment: Chrome 155 on macOS; the Prompt API (Nano) reports `available`.
@@ -54,6 +62,8 @@ Kept for the move back to a local model.
 - Haiku for the outline (see above). A "use exactly that" rule for merges (decided against).
 
 ## Next
+- **Focus: the UX on the cloud model** (Sonnet), to prove the concept before returning to local models.
+- Open UX question: Distill's role vs spoken restructuring (voice did the big reorganizations; Distill's value was the questions). Consider renaming it, or a stronger model for Distill only (Opus and Argon caught a real gap; Sonnet didn't).
 - A walk session with back-and-forth and a real change of mind; both are still untested live.
 - Then UX iterations (layout, cadence, highlighting).
-- Toward on-device: re-test the patch-style design (outline + new utterances → changed points only) on a local model. It is a much smaller task than the full rewrite, which is the kind of task Nano can handle.
+- **Small / local models: parked.** See `SMALL-MODELS.md` for the props, evidence and conclusion (on a base M2, local models are either fast or accurate, not both) and the one idea worth returning to. Back to the UX on the cloud model to prove the concept first.

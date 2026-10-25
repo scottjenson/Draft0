@@ -59,7 +59,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
 .bar label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.84rem; color: var(--muted); min-width: 0; }
 input[type=text], input[type=password] { font: 400 0.86rem var(--font-body); padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); min-width: 0; }
-#topic { flex: 1; min-width: 200px; }
+#topic { font: 600 1.35rem/1.3 var(--font-display); background: transparent; border-color: transparent; padding: 4px 6px; margin: 0 -6px; width: 100%; }
+#topic:hover, #topic:focus { border-color: var(--line); background: var(--surface); outline: none; }
+#topic:placeholder-shown { font-size: 1rem; font-weight: 400; }
 #key { width: 15em; }
 .status { font-size: 0.85rem; color: var(--muted); min-height: 1.3em; }
 .status.err { color: var(--rec); }
@@ -81,6 +83,17 @@ input[type=text], input[type=password] { font: 400 0.86rem var(--font-body); pad
 @keyframes fresh { from { background: var(--fresh); border-color: var(--accent); } to { background: var(--surface); border-color: var(--line); } }
 @media (prefers-reduced-motion: reduce) { .point.fresh { animation: none; border-color: var(--accent); } }
 .retired { font-size: 0.85rem; color: var(--muted); margin: 6px 0 0; }
+.questions { background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: 8px 16px; }
+.questions h3 { font: 600 0.72rem/1.4 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin: 4px 0 2px; }
+.questions ul { margin: 2px 0 4px; padding-left: 1.2em; font: 400 1rem/1.5 var(--font-display); }
+.questions li.answered { color: var(--muted); }
+.questions li.answered s { text-decoration-thickness: 1px; }
+.notes { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 16px; margin-top: 12px; }
+.notes h3 { font: 600 0.72rem/1.4 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 6px 0 2px; }
+.notes ul { margin: 2px 0 6px; padding-left: 1.2em; font-size: 0.92rem; }
+.leftout { font-size: 0.85rem; color: var(--muted); margin-top: 8px; }
+.leftout summary { cursor: pointer; }
+.leftout ul { margin: 4px 0; padding-left: 1.2em; }
 .retired .undo { padding: 3px 8px; font-size: 0.8rem; margin-left: 4px; }
 .empty { color: var(--muted); font-style: italic; padding: 24px 4px; text-align: center; }
 .tail { font-size: 0.88rem; color: var(--muted); border-left: 3px solid var(--line); padding: 2px 0 2px 10px; }
@@ -89,6 +102,7 @@ input[type=text], input[type=password] { font: 400 0.86rem var(--font-body); pad
 /* debug */
 .debug { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
 .debug > summary { cursor: pointer; font: 600 0.72rem/1.4 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.debug .bar { margin-top: 10px; padding: 0; border: 0; }
 .dbg-grid { display: grid; gap: 12px; margin-top: 10px; }
 .dbg-head { font: 600 0.7rem var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .transcript, .log { max-height: 320px; overflow: auto; font-size: 0.85rem; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--bg); }
@@ -103,8 +117,6 @@ input[type=text], input[type=password] { font: 400 0.86rem var(--font-body); pad
 <div class="wrap">
   <header>
     <h1>Draft0</h1>
-    <span class="meta">cloud outline</span>
-    <span class="pill" id="pill-speech">Speech</span>
     <span class="spacer"></span>
     <span class="meta" id="saved"></span>
   </header>
@@ -114,40 +126,42 @@ input[type=text], input[type=password] { font: 400 0.86rem var(--font-body); pad
   <div class="bar">
     <button id="talk" type="button"><span class="dot"></span><span id="talk-label">Talk</span></button>
     <span class="meta" id="timer">0:00</span>
-    <input type="text" id="topic" placeholder="Topic (optional) — helps with misheard names and terms">
-  </div>
-
-  <div class="bar">
-    <label for="key">OpenRouter key <input type="password" id="key" autocomplete="off" placeholder="sk-or-…"></label>
-    <label for="model">Model <select id="model"></select></label>
-    <button id="refresh" type="button">Refresh now</button>
-    <span class="meta" id="refresh-info"></span>
-  </div>
-
-  <div class="bar">
-    <input type="file" id="replay-file" accept=".txt,.json,text/plain,application/json" hidden>
-    <button id="replay" type="button">Replay file…</button>
-    <label for="speed">Speed
-      <select id="speed">
-        <option value="1">1× (speaking pace)</option>
-        <option value="4" selected>4×</option>
-        <option value="max">Fast (refresh every 3 utterances)</option>
-      </select>
-    </label>
-    <button id="stop-replay" type="button" hidden>Stop replay</button>
+    <button id="distill" type="button" title="Rework what's new into fewer, stronger points, with open questions; earlier points change only gently">Distill</button>
     <span class="spacer"></span>
-    <button id="folder" type="button" title="Pick a folder; sessions are then saved there automatically">Save sessions to folder…</button>
-    <button id="download" type="button">Download session</button>
     <button id="new" type="button">New session</button>
   </div>
 
   <div class="status" id="status" role="status"></div>
 
+  <input type="text" id="topic" aria-label="Topic" title="Guessed from what you say first; click to correct it" placeholder="Topic (guessed from your first few sentences)">
+  <section class="questions" id="questions" hidden></section>
   <main id="view"></main>
   <div class="tail" id="tail" hidden></div>
 
   <details class="debug" id="debug">
-    <summary>Debug: transcript and model calls</summary>
+    <summary>Tools &amp; debug</summary>
+    <div class="bar">
+      <span class="pill" id="pill-speech">Speech</span>
+      <label for="key">OpenRouter key <input type="password" id="key" autocomplete="off" placeholder="sk-or-…"></label>
+      <label for="model">Model <select id="model"></select></label>
+      <button id="refresh" type="button">Refresh now</button>
+      <span class="meta" id="refresh-info"></span>
+    </div>
+    <div class="bar">
+      <input type="file" id="replay-file" accept=".txt,.json,text/plain,application/json" hidden>
+      <button id="replay" type="button">Replay file…</button>
+      <label for="speed">Speed
+        <select id="speed">
+          <option value="1">1× (speaking pace)</option>
+          <option value="4" selected>4×</option>
+          <option value="max">Fast (refresh every 3 utterances)</option>
+        </select>
+      </label>
+      <button id="stop-replay" type="button" hidden>Stop replay</button>
+      <span class="spacer"></span>
+      <button id="folder" type="button" title="Pick a folder; sessions are then saved there automatically">Save sessions to folder…</button>
+      <button id="download" type="button">Download session</button>
+    </div>
     <div class="dbg-grid">
       <div><div class="dbg-head">Transcript</div><div class="transcript" id="transcript"></div></div>
       <div><div class="dbg-head">Calls</div><div class="log" id="log"></div></div>
@@ -161,7 +175,7 @@ input[type=text], input[type=password] { font: 400 0.86rem var(--font-body); pad
   const els = {
     talk: $('talk'), talkLabel: $('talk-label'), timer: $('timer'), topic: $('topic'), key: $('key'), model: $('model'),
     refresh: $('refresh'), refreshInfo: $('refresh-info'), replay: $('replay'), replayFile: $('replay-file'), speed: $('speed'),
-    stopReplay: $('stop-replay'), folder: $('folder'), download: $('download'), newBtn: $('new'), saved: $('saved'),
+    stopReplay: $('stop-replay'), folder: $('folder'), download: $('download'), newBtn: $('new'), saved: $('saved'), distill: $('distill'), questions: $('questions'),
     status: $('status'), view: $('view'), tail: $('tail'), transcript: $('transcript'), log: $('log'), debug: $('debug'),
     pillSpeech: $('pill-speech'),
   };
@@ -174,7 +188,9 @@ input[type=text], input[type=password] { font: 400 0.86rem var(--font-body); pad
   const CALL_TIMEOUT_MS = 120000;
   const CONTEXT_UTTS = 4;           // already-outlined utterances sent along for context (e.g. a sentence cut off mid-way)
   // Sounds like an edit to the outline: refresh at once instead of waiting out MIN_GAP_MS. A miss just means the normal wait.
-  const EDIT_CUE = /\b(points? (number )?(one|two|three|four|five|six|seven|eight|\d)|combine|merge|collapse|get rid of|delete|remove|rename|call (it|that|those|this|them)|misspell|spell(ed|ing)|change that|scratch that)\b/i;
+  const EDIT_CUE = /\b(points? (number )?(one|two|three|four|five|six|seven|eight|\d)|combine|merge|collapse|get rid of|delete|remove|rename|call (it|that|those|this|them)|misspell|spell(ed|ing)|change that|scratch that|reorgani[sz]e)\b/i;
+  // Asking for a distill out loud does the same as the button.
+  const DISTILL_CUE = /\b(distill|clean (this|it|that) up)\b/i;
   const OPENROUTER = 'https://openrouter.ai/api/v1';
   const DEFAULT_MODEL = 'anthropic/claude-sonnet-5.5';
   const FALLBACK_MODELS = ['anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5.5', 'anthropic/claude-haiku-5.5', 'google/gemini-3.8-flash'];
@@ -187,13 +203,14 @@ The outline is what they would want to read back: their main points, merged and 
 - When they change their mind, keep only their latest position.
 - State their positions crisply, in plain language. Do not add ideas, critiques, questions, or advice of your own.
 - Leave out filler, off-topic asides, remarks to other people, and talk about the session itself (what they plan to cover, why they are listing things, how they will organize it). Never make a point out of these.
-- The transcript comes from speech recognition and contains errors. Read through them; use the topic, if given, for names and terms.
+- The transcript comes from speech recognition and contains errors. Read through them; use the topic for names and terms.
 
 What you return (the speaker reads this while talking, so change only what the new utterances call for):
 - updated: every point you add or change, complete (id, title, summary, all bullets). Leave out unchanged points; they stay exactly as they are.
 - New points get new ids (p1, p2, …). Never reuse an id that is in the outline or retired.
 - removed: points to take out, each with its id and a reason: "merged into pN", or the speaker's words asking for it. Remove a point only when they ask or when you merge it into another, never because the new utterances don't mention it.
 - order: the ids of all points in their new order, only when the order changes; otherwise an empty list. New points go at the end.
+- topic: a few words naming what they are talking about, to help read misheard names and terms. Give it with the first outline; after that return an empty string unless the topic given to you is clearly wrong.
 - changes: one short sentence on what changed, e.g. "Added a point on X; merged points 2 and 3 as asked." For the first outline, say what it covers. If nothing changed, return empty lists and say so.
 
 Sometimes they talk about the outline itself: "points two and three are the same thing, combine them", "point four doesn't make sense, get rid of it", "call point one X", "by the way, the book is called Y". Point numbers mean the numbers in the current outline.
@@ -201,18 +218,58 @@ Sometimes they talk about the outline itself: "points two and three are the same
 - To merge, put the combined content in one of the points (in updated) and remove the others with "merged into pN".
 - Act only on instructions in the new utterances. The earlier utterances are context only; they are already reflected in the outline.
 - A number mentioned in passing ("that goes to point two") is not an instruction. Act only when they clearly ask for a change to the outline.
-- Leave the instruction itself out of the outline.`;
+- Leave the instruction itself out of the outline.
+
+There may be open questions (from an earlier distill). When the new utterances answer one, list it in answered (its id and their answer in a few words) and put the answer in the outline where it belongs. A working assumption ("let's assume X for now") counts as an answer. Leave a question alone if they only touched on it, and never add questions of your own.`;
+
+  // Distill: on demand, a heavier pass. New material is restructured hard; points that survived the last distill have
+  // inertia (added to, never reworked), and big moves on them come back as questions for a spoken edit.
+  const DISTILL = `Someone has been thinking out loud: rambling, changing direction, contradicting themselves. They pressed Distill: tell them what you heard them mean. You are an opinionated mirror. You decide what their main points are and structure them strongly, but every idea is theirs; do not add ideas, critiques, or advice of your own.
+
+You get the current outline (numbered as the speaker sees it, each point marked existing or new), the open questions and loose ends from the last distill, and what they said: everything the first time, after that only what is new since the last distill, with a few earlier utterances for context.
+
+Be bold. Find the meaning in the noise:
+- Work out the real question or idea they are circling, and build the outline around it. Group by that, not by the order they said things or by how the outline grew.
+- Aim for fewer, stronger points (2 to 6), each with a short title, a one-sentence summary, and at most 4 bullets. A shorter outline that says what they mean beats a complete one.
+- Keep their decisions, their current positions, and the specifics that carry them. Drop filler, repetition, side reasoning they no longer need, talk about the session or the tool, and positions they later replaced.
+- Where they contradicted themselves, keep where they ended up. If they never settled it, make it an open question rather than a point.
+- Look for overlap: points that cover the same ground, or that only restate the open questions. Merge new ones; for existing ones, ask (below).
+- The transcript comes from speech recognition and contains errors. Read through them; use the topic for names and terms.
+
+Two kinds of points:
+- New points, and everything in the new utterances, are fair game: rewrite, merge, split, or fold them into other points, or turn them into open questions or loose ends. Restructure freely.
+- Existing points survived an earlier distill and have inertia. You may add new material to them, sharpen a phrase, or update a detail they later changed, but do not rework, merge, split, or remove them. When existing points overlap each other or a new point, or should be split or dropped, ask it as an open question ("Points 2 and 5 cover the same ground. Combine them?"). The only exception is when the new utterances ask for that change.
+
+Open questions (at most 4): what they left unresolved, in their terms: undecided choices, contradictions they never settled, things they said they still need to figure out. Not advice and not new topics. Keep earlier questions that are still open; drop those they have since answered.
+Loose ends (at most 4): odd or specific details that don't fit any point but might matter later. Keep earlier ones unless they now fit a point or no longer apply.
+
+What you return:
+- updated: every point you add or change, complete (id, title, summary, all bullets). Leave out unchanged points; they stay exactly as they are.
+- New points get new ids (p1, p2, …). Never reuse an id that is in the outline or retired.
+- removed: points to take out, each with its id and a reason, e.g. "merged into pN", "now an open question", or the speaker's words asking for it.
+- order: the ids of all points in their new order, or an empty list if the order is unchanged.
+- questions and looseEnds: the complete lists; they replace the previous ones.
+- leftOut: short notes on what you dropped as noise or replaced positions, so they can check nothing important was lost.
+- changes: one short sentence on what you did.`;
 
   const POINT = { type: 'object', additionalProperties: false, required: ['id', 'title', 'summary', 'bullets'],
     properties: { id: { type: 'string' }, title: { type: 'string' }, summary: { type: 'string' }, bullets: { type: 'array', items: { type: 'string' } } } };
   const SCHEMA = {
-    type: 'object', additionalProperties: false, required: ['updated', 'removed', 'order', 'changes'],
+    type: 'object', additionalProperties: false, required: ['updated', 'removed', 'order', 'topic', 'answered', 'changes'],
     properties: {
       updated: { type: 'array', items: POINT },
       removed: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['id', 'reason'], properties: { id: { type: 'string' }, reason: { type: 'string' } } } },
       order: { type: 'array', items: { type: 'string' } },
+      topic: { type: 'string' },
+      answered: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['id', 'answer'], properties: { id: { type: 'string' }, answer: { type: 'string' } } } },
       changes: { type: 'string' },
     },
+  };
+  const STRINGS = { type: 'array', items: { type: 'string' } };
+  const DISTILL_SCHEMA = {
+    type: 'object', additionalProperties: false, required: ['updated', 'removed', 'order', 'questions', 'looseEnds', 'leftOut', 'changes'],
+    properties: { updated: SCHEMA.properties.updated, removed: SCHEMA.properties.removed, order: SCHEMA.properties.order,
+      questions: STRINGS, looseEnds: STRINGS, leftOut: STRINGS, changes: SCHEMA.properties.changes },
   };
 
   // ---------- helpers ----------
@@ -232,8 +289,8 @@ Sometimes they talk about the outline itself: "points two and three are the same
   let S = null;
   let viewIndex = null; // null = follow the latest version
   function newSession(source = 'live') {
-    S = { id: new Date().toISOString(), source, topic: els.topic.value.trim(), startedAt: Date.now(),
-      utterances: [], versions: [], calls: [], retired: [], cost: 0 };
+    S = { id: new Date().toISOString(), source, topic: els.topic.value.trim(), topicBy: els.topic.value.trim() ? 'speaker' : null, startedAt: Date.now(),
+      utterances: [], versions: [], calls: [], retired: [], qSeq: 0, cost: 0 };
     viewIndex = null; lastSentUtt = 0; lastRefreshAt = 0; pending = false; urgent = false;
     clearTimeout(refreshTimer);
     els.log.innerHTML = '';
@@ -241,14 +298,15 @@ Sometimes they talk about the outline itself: "points two and three are the same
     render();
   }
   const latest = () => S.versions[S.versions.length - 1];
+  const lastDistill = () => S.versions.findLast((v) => v.distill);
 
   function addUtterance(text) {
     text = text.replace(/\s+/g, ' ').trim();
     if (!text) return;
     S.utterances.push({ text, t: Date.now() - S.startedAt });
     dirty();
-    if (EDIT_CUE.test(text)) urgent = true;
-    scheduleRefresh(urgent);
+    if (DISTILL_CUE.test(text)) refresh(true);
+    else { if (EDIT_CUE.test(text)) urgent = true; scheduleRefresh(urgent); }
     render();
   }
 
@@ -256,7 +314,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
   // Outline refresh (OpenRouter). The model sees the outline plus only the new utterances (and a little context),
   // so old instructions can't be re-applied, and returns only what changed, so nothing is dropped by omission.
   // =====================================================================
-  let inFlight = false, pending = false, urgent = false, lastSentUtt = 0, lastRefreshAt = 0, refreshTimer = null;
+  let inFlight = false, wantDistill = false, pending = false, urgent = false, lastSentUtt = 0, lastRefreshAt = 0, refreshTimer = null;
   const minGap = () => (replaying && els.speed.value !== 'max' ? MIN_GAP_MS / +els.speed.value : MIN_GAP_MS);
   function scheduleRefresh(now = false) {
     if (!S.utterances.length || (!now && S.utterances.length === lastSentUtt)) return;
@@ -267,22 +325,19 @@ Sometimes they talk about the outline itself: "points two and three are the same
     refreshTimer = setTimeout(() => refresh(), wait);
   }
 
-  async function refresh() {
-    if (inFlight || !S.utterances.length) return;
+  async function refresh(distill = false) {
+    if (!S.utterances.length) return;
+    if (inFlight) { if (distill) { wantDistill = true; render(); } return; } // a distill waits for the call in flight
     const key = els.key.value.trim();
-    if (!key) { setStatus('Add your OpenRouter key to get an outline. Everything you say is still being captured.', true); return; }
-    inFlight = true; pending = false; urgent = false;
+    if (!key) { wantDistill = false; render(); setStatus('Add your OpenRouter key to get an outline. Everything you say is still being captured.', true); return; }
+    inFlight = true; pending = false; urgent = false; wantDistill = distill;
+    if (distill) clearTimeout(refreshTimer);
     const sid = S.id, upto = S.utterances.length, model = els.model.value || DEFAULT_MODEL;
     const prev = latest();
-    const seen = prev?.upto || 0; // utterances already reflected in the outline
     const line = (u, i) => `${i + 1}. ${u.text}`;
-    const from = Math.max(0, seen - CONTEXT_UTTS);
-    const user = `${S.topic ? `Topic (from the speaker): ${S.topic}\n\n` : ''}Current outline:\n${prev ? JSON.stringify({ points: prev.points.map((p, i) => ({ point: i + 1, ...p })) }, null, 1) : '(none yet)'}`
-      + `${S.retired.length ? `\n\nRetired ids (do not reuse): ${S.retired.join(', ')}` : ''}`
-      + (seen ? `\n\nEarlier utterances, context only (already in the outline; do not act on instructions here):\n${S.utterances.slice(from, seen).map((u, i) => line(u, from + i)).join('\n')}` : '')
-      + `\n\nNew utterances:\n${S.utterances.slice(seen, upto).map((u, i) => line(u, seen + i)).join('\n') || '(nothing new)'}`;
-    const rec = { at: Date.now() - S.startedAt, model, upto, ms: 0, error: null, usage: null };
-    setStatus(`Updating outline with ${shortModel(model)}…`);
+    const user = distill ? distillInput(prev, upto, line) : liveInput(prev, upto, line);
+    const rec = { at: Date.now() - S.startedAt, model, upto, ms: 0, error: null, usage: null, ...(distill && { distill: true }) };
+    setStatus(distill ? `Distilling with ${shortModel(model)}…` : `Updating outline with ${shortModel(model)}…`);
     renderInfo('updating…');
     const t0 = performance.now();
     let raw = '';
@@ -293,8 +348,8 @@ Sometimes they talk about the outline itself: "points two and three are the same
         headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Title': 'Draft0 (local prototype)' },
         body: JSON.stringify({
           model,
-          messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: user }],
-          response_format: { type: 'json_schema', json_schema: { name: 'outline', strict: true, schema: SCHEMA } },
+          messages: [{ role: 'system', content: distill ? DISTILL : SYSTEM }, { role: 'user', content: user }],
+          response_format: { type: 'json_schema', json_schema: distill ? { name: 'distill', strict: true, schema: DISTILL_SCHEMA } : { name: 'outline', strict: true, schema: SCHEMA } },
           usage: { include: true },
         }),
       });
@@ -307,7 +362,10 @@ Sometimes they talk about the outline itself: "points two and three are the same
       const base = latest()?.points || []; // not `prev`: an Undo may have landed while we waited
       const { points, removed } = applyPatch(base, patch);
       for (const r of removed) if (!S.retired.includes(r.id)) S.retired.push(r.id);
-      S.versions.push({ at: rec.at, upto, model, ms: performance.now() - t0, points, changes: patch.changes, removed, receivedAt: Date.now() });
+      if (patch.topic && S.topicBy !== 'speaker') { S.topic = patch.topic; S.topicBy = 'model'; els.topic.value = patch.topic; } // the speaker's correction wins
+      const notes = distill ? { distill: true, questions: keepIds(latest()?.questions, patch.questions), looseEnds: patch.looseEnds, leftOut: patch.leftOut }
+        : answerQuestions(carryNotes(latest()), patch.answered);
+      S.versions.push({ at: rec.at, upto, model, ms: performance.now() - t0, points, changes: patch.changes, removed, receivedAt: Date.now(), ...notes });
       if (rec.usage?.cost) S.cost += rec.usage.cost;
       lastSentUtt = upto;
       dirty();
@@ -320,17 +378,51 @@ Sometimes they talk about the outline itself: "points two and three are the same
       if (S.id === sid) { S.calls.push(rec); logCall(rec, user, raw); }
       lastRefreshAt = Date.now();
       inFlight = false;
+      if (distill) wantDistill = false;
       render();
       scheduleSave();
-      if (S.id === sid && (pending || S.utterances.length > lastSentUtt) && !rec.error) scheduleRefresh(urgent);
+      if (S.id === sid && wantDistill) refresh(true);
+      else if (S.id === sid && (pending || S.utterances.length > lastSentUtt) && !rec.error) scheduleRefresh(urgent);
     }
+  }
+  // Live input: the outline, open questions, a few already-outlined utterances as context, and the new ones.
+  function liveInput(prev, upto, line) {
+    const seen = prev?.upto || 0; // utterances already reflected in the outline
+    const from = Math.max(0, seen - CONTEXT_UTTS);
+    return `${S.topic ? `Topic (${S.topicBy === 'speaker' ? 'from the speaker' : 'your earlier guess'}): ${S.topic}\n\n` : ''}Current outline:\n${prev ? JSON.stringify({ points: prev.points.map((p, i) => ({ point: i + 1, ...p })) }, null, 1) : '(none yet)'}`
+      + `${S.retired.length ? `\n\nRetired ids (do not reuse): ${S.retired.join(', ')}` : ''}`
+      + (prev?.questions?.length ? `\n\nOpen questions:\n${prev.questions.map((q) => `- ${q.id}: ${q.text}`).join('\n')}` : '')
+      + (seen ? `\n\nEarlier utterances, context only (already in the outline; do not act on instructions here):\n${S.utterances.slice(from, seen).map((u, i) => line(u, from + i)).join('\n')}` : '')
+      + `\n\nNew utterances:\n${S.utterances.slice(seen, upto).map((u, i) => line(u, seen + i)).join('\n') || '(nothing new)'}`;
+  }
+  // Distill input: points marked existing (they were in the last distill) or new; the first time everything said, after
+  // that only what's new since the last distill (with a little context), so later distills stay small.
+  function distillInput(prev, upto, line) {
+    const last = lastDistill(), existing = new Set(last?.points.map((p) => p.id) || []), since = last?.upto || 0;
+    const from = Math.max(0, since - CONTEXT_UTTS);
+    const list = (title, a) => (a?.length ? `\n\n${title}:\n${a.map((x) => `- ${x}`).join('\n')}` : '');
+    return `${S.topic ? `Topic: ${S.topic}\n\n` : ''}Current outline:\n${prev?.points.length ? JSON.stringify({ points: prev.points.map((p, i) => ({ point: i + 1, kind: existing.has(p.id) ? 'existing' : 'new', ...p })) }, null, 1) : '(none yet)'}`
+      + `${S.retired.length ? `\n\nRetired ids (do not reuse): ${S.retired.join(', ')}` : ''}`
+      + list('Open questions', prev?.questions?.map((q) => q.text)) + list('Loose ends from the last distill', prev?.looseEnds)
+      + (since ? `\n\nEarlier utterances, context only (already distilled; do not act on instructions here):\n${S.utterances.slice(from, since).map((u, i) => line(u, from + i)).join('\n')}`
+        + `\n\nNew since the last distill:\n${S.utterances.slice(since, upto).map((u, i) => line(u, since + i)).join('\n') || '(nothing new)'}`
+        : `\n\nEverything they have said:\n${S.utterances.slice(0, upto).map(line).join('\n')}`);
+  }
+  // Questions and loose ends stay through live updates; a live update can only clear a question the speaker answered
+  // (kept on that version, struck through, so they see it land). Only a distill adds questions.
+  const carryNotes = (v) => (v?.questions || v?.looseEnds ? { questions: v.questions || [], looseEnds: v.looseEnds || [] } : {});
+  const keepIds = (old = [], texts) => texts.map((text) => old.find((q) => q.text === text) || { id: `q${++S.qSeq}`, text });
+  function answerQuestions(notes, answered) {
+    const done = answered.flatMap((a) => { const q = notes.questions?.find((x) => x.id === a.id); return q ? [{ ...q, answer: a.answer }] : []; });
+    if (!done.length) return notes;
+    return { ...notes, questions: notes.questions.filter((q) => !done.some((d) => d.id === q.id)), answered: done };
   }
   // Structured output should give clean JSON; tolerate a fenced or wrapped reply anyway.
   function parsePatch(raw) {
     let o;
     try { o = JSON.parse(raw); } catch { const m = raw.match(/\{[\s\S]*\}/); if (!m) throw new Error('model returned no JSON'); o = JSON.parse(m[0]); }
     const arr = (a) => (Array.isArray(a) ? a : []);
-    return { changes: String(o.changes || ''), order: arr(o.order).map(String),
+    return { changes: String(o.changes || ''), answered: arr(o.answered).map((a) => ({ id: String(a?.id || ''), answer: String(a?.answer || '') })), questions: arr(o.questions).map(String), looseEnds: arr(o.looseEnds).map(String), leftOut: arr(o.leftOut).map(String), topic: String(o.topic || '').trim(), order: arr(o.order).map(String),
       removed: arr(o.removed).map((r) => ({ id: String(r?.id || ''), reason: String(r?.reason || '') })),
       updated: arr(o.updated).map((p) => ({ id: String(p?.id || ''), title: String(p?.title || ''), summary: String(p?.summary || ''), bullets: arr(p?.bullets).map(String) })) };
   }
@@ -341,6 +433,9 @@ Sometimes they talk about the outline itself: "points two and three are the same
     const at = (id) => points.findIndex((p) => p.id === id);
     const num = (id) => +(/^p(\d+)$/.exec(id)?.[1] || 0);
     let next = Math.max(0, ...[...points.map((p) => p.id), ...S.retired].map(num)) + 1;
+    // Small models sometimes name a point by its displayed number ("1", "point 1") instead of its id.
+    const byNumber = (id) => { const m = /^(?:point\s*)?(\d+)$/i.exec(String(id).trim()); return m && base[m[1] - 1] ? base[m[1] - 1].id : id; };
+    patch = { ...patch, removed: patch.removed.map((r) => ({ ...r, id: byNumber(r.id) })), updated: patch.updated.map((u) => ({ ...u, id: byNumber(u.id) })), order: patch.order.map(byNumber) };
     const updatedIds = new Set(patch.updated.map((u) => u.id));
     const removed = [];
     for (const r of patch.removed) {
@@ -369,7 +464,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
     points.splice(Math.min(r.index, points.length), 0, r.point);
     S.retired = S.retired.filter((x) => x !== id);
     S.versions.push({ at: Date.now() - S.startedAt, upto: v.upto, model: 'undo', ms: 0, points,
-      changes: `Restored "${r.point.title}" (undo).`, removed: v.removed.filter((x) => x.id !== id), receivedAt: Date.now() });
+      changes: `Restored "${r.point.title}" (undo).`, removed: v.removed.filter((x) => x.id !== id), receivedAt: Date.now(), ...carryNotes(v) });
     viewIndex = null;
     dirty(); render(); scheduleSave();
   }
@@ -389,7 +484,6 @@ Sometimes they talk about the outline itself: "points two and three are the same
     // Talk continues whatever is on screen (New clears it). A replay continued live records where live speech began.
     if (!S.utterances.length) newSession('live');
     else if (S.source !== 'live' && S.liveFrom == null) S.liveFrom = S.utterances.length;
-    S.topic = els.topic.value.trim();
     await ensureFolderPermission();
     recognition = new SR();
     recognition.lang = 'en-US';
@@ -418,7 +512,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
     timerId = setInterval(() => { els.timer.textContent = fmtTime(Date.now() - talkStart); }, 500);
     els.talk.classList.add('on'); els.talkLabel.textContent = 'Stop';
     els.replay.disabled = els.newBtn.disabled = true;
-    setStatus(els.key.value.trim() ? 'Listening…' : 'Listening… (add your OpenRouter key to get an outline)');
+    setStatus(els.key.value.trim() ? 'Listening…' : 'Listening… (add your OpenRouter key under Tools below to get an outline)');
   }
   function stopTalking() {
     talking = false;
@@ -440,9 +534,9 @@ Sometimes they talk about the outline itself: "points two and three are the same
     if (/\.json$/i.test(file.name)) {
       const j = JSON.parse(textIn);
       utts = (j.utterances || []).map((u) => (typeof u === 'string' ? { text: u } : { text: u.text, t: u.t }));
-      if (j.topic && !els.topic.value.trim()) els.topic.value = j.topic;
     } else utts = textIn.split(/\n+/).map((l) => ({ text: l.trim() })).filter((u) => u.text);
     if (!utts.length) { setStatus('Nothing to replay in that file.', true); return; }
+    els.topic.value = '';
     newSession(`replay:${file.name}`);
     replaying = true;
     els.stopReplay.hidden = false; els.replay.disabled = els.talk.disabled = els.newBtn.disabled = true;
@@ -466,6 +560,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
     } finally {
       replaying = false;
       els.stopReplay.hidden = true; els.replay.disabled = els.talk.disabled = els.newBtn.disabled = false;
+      render();
       scheduleSave(true);
     }
   }
@@ -533,12 +628,14 @@ Sometimes they talk about the outline itself: "points two and three are the same
   // =====================================================================
   function render() {
     if (!S) return;
+    els.distill.disabled = !S.utterances.length || wantDistill;
+    els.distill.textContent = wantDistill ? 'Distilling…' : 'Distill';
     const n = S.versions.length;
     const idx = viewIndex ?? n - 1;
     const v = S.versions[idx];
     if (!v) {
       els.view.innerHTML = `<div class="empty">${S.utterances.length
-        ? (els.key.value.trim() ? 'Listening. The first outline appears after your first pause.' : 'Listening. Add your OpenRouter key above to get an outline.')
+        ? (els.key.value.trim() ? 'Listening. The first outline appears after your first pause.' : 'Listening. Add your OpenRouter key under Tools below to get an outline.')
         : 'Press Talk and start thinking out loud. Your main points will appear here.'}</div>`;
     } else {
       const prev = S.versions[idx - 1];
@@ -548,7 +645,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
       const retired = (prev?.points || []).filter((p) => !v.points.some((q) => q.id === p.id)); // sessions saved before `removed`
       els.view.innerHTML = `<div class="vnav">
           <button id="v-prev" ${idx <= 0 ? 'disabled' : ''} aria-label="Previous version">◀</button>
-          <span>Version ${idx + 1} of ${n} · ${fmtTime(v.at)} · ${esc(shortModel(v.model))}</span>
+          <span>Version ${idx + 1} of ${n} · ${fmtTime(v.at)} · ${esc(shortModel(v.model))}${v.distill ? ' · distilled' : ''}</span>
           <button id="v-next" ${idx >= n - 1 ? 'disabled' : ''} aria-label="Next version">▶</button>
           ${viewIndex != null && idx < n - 1 ? '<button id="v-latest">Latest</button>' : ''}
           <span class="changes">${esc(v.changes)}</span>
@@ -563,13 +660,16 @@ Sometimes they talk about the outline itself: "points two and three are the same
             ${p.bullets.length ? `<ul>${p.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}</li>`;
         }).join('')}</ol>
         ${v.removed ? v.removed.map((r) => `<p class="retired">Removed: ${esc(r.point.title)} <span class="meta">(${esc(r.reason)})</span>${idx === n - 1 ? ` <button type="button" class="undo" data-id="${esc(r.id)}">Undo</button>` : ''}</p>`).join('')
-          : retired.length ? `<p class="retired">Folded in or dropped since the last version: ${retired.map((p) => esc(p.title)).join('; ')}</p>` : ''}`;
+          : retired.length ? `<p class="retired">Folded in or dropped since the last version: ${retired.map((p) => esc(p.title)).join('; ')}</p>` : ''}
+        ${v.looseEnds?.length ? `<div class="notes">${noteList('Loose ends', v.looseEnds)}</div>` : ''}
+        ${v.leftOut?.length ? `<details class="leftout"><summary>Left out by this distill (${v.leftOut.length})</summary><ul>${v.leftOut.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></details>` : ''}`;
       els.view.querySelectorAll('.undo').forEach((b) => b.addEventListener('click', () => undoRemoval(b.dataset.id)));
       $('v-prev')?.addEventListener('click', () => { viewIndex = idx - 1; render(); });
       $('v-next')?.addEventListener('click', () => { viewIndex = idx + 1 >= n - 1 ? null : idx + 1; render(); });
       $('v-latest')?.addEventListener('click', () => { viewIndex = null; render(); });
       if (age < 6000) setTimeout(render, 1000);
     }
+    renderQuestions(v);
     renderTail();
     renderInfo();
     if (els.debug.open) {
@@ -577,6 +677,14 @@ Sometimes they talk about the outline itself: "points two and three are the same
       els.transcript.innerHTML = S.utterances.map((u, i) => `<div class="utt"><span class="meta">${i + 1} · ${fmtTime(u.t)}</span>${esc(u.text)}</div>`).join('');
       if (nearBottom) els.transcript.scrollTop = els.transcript.scrollHeight;
     }
+  }
+  const noteList = (title, a) => (a?.length ? `<h3>${title}</h3><ul>${a.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
+  // Open questions sit above the outline; ones answered in this version show struck through with the answer.
+  function renderQuestions(v) {
+    const open = v?.questions || [], done = v?.answered || [];
+    els.questions.hidden = !open.length && !done.length;
+    els.questions.innerHTML = `<h3>Open questions</h3><ul>${done.map((q) => `<li class="answered"><s>${esc(q.text)}</s> → ${esc(q.answer)}</li>`).join('')}`
+      + `${open.map((q) => `<li>${esc(q.text)}</li>`).join('')}</ul>`;
   }
   // What's been said since the last outline, so you can see it's being captured.
   function renderTail() {
@@ -599,7 +707,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
   function logCall(rec, user, raw) {
     const d = document.createElement('details');
     const u = rec.usage ? ` · ${rec.usage.prompt_tokens ?? '?'} in / ${rec.usage.completion_tokens ?? '?'} out${rec.usage.cost ? ` · $${rec.usage.cost.toFixed(4)}` : ''}` : '';
-    d.innerHTML = `<summary class="${rec.error ? 'bad' : ''}">${fmtTime(rec.at)} ${esc(shortModel(rec.model))} ${secs(rec.ms)} · utterances 1–${rec.upto}${u}${rec.error ? ` → ${esc(rec.error)}` : ''}</summary><pre>IN:\n${esc(user)}\n\nOUT:\n${esc(raw || rec.error)}</pre>`;
+    d.innerHTML = `<summary class="${rec.error ? 'bad' : ''}">${fmtTime(rec.at)} ${esc(shortModel(rec.model))} ${rec.distill ? 'DISTILL ' : ''}${secs(rec.ms)} · utterances 1–${rec.upto}${u}${rec.error ? ` → ${esc(rec.error)}` : ''}</summary><pre>IN:\n${esc(user)}\n\nOUT:\n${esc(raw || rec.error)}</pre>`;
     const nearBottom = els.log.scrollHeight - els.log.scrollTop - els.log.clientHeight < 40;
     els.log.appendChild(d);
     if (nearBottom) els.log.scrollTop = els.log.scrollHeight;
@@ -629,6 +737,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
 
   els.talk.addEventListener('click', () => (talking ? stopTalking() : startTalking()));
   els.refresh.addEventListener('click', () => { if (!inFlight) { clearTimeout(refreshTimer); refresh(); } });
+  els.distill.addEventListener('click', () => refresh(true));
   els.replay.addEventListener('click', () => els.replayFile.click());
   els.replayFile.addEventListener('change', async () => {
     const f = els.replayFile.files[0]; els.replayFile.value = '';
@@ -639,6 +748,7 @@ Sometimes they talk about the outline itself: "points two and three are the same
   els.stopReplay.addEventListener('click', () => { replaying = false; });
   els.newBtn.addEventListener('click', () => {
     if (S.utterances.length && unsavedChanges() && !confirm('Start a new session? This one has unsaved changes (download it first if you want to keep it).')) return;
+    els.topic.value = '';
     newSession('live');
     els.timer.textContent = '0:00';
     setStatus('');
@@ -660,10 +770,10 @@ Sometimes they talk about the outline itself: "points two and three are the same
   });
   // The key is kept only in this browser's localStorage, for this local prototype.
   els.key.value = lsGet('mirror-cloud.key') || '';
+  if (!els.key.value) els.debug.open = true;
   els.key.addEventListener('input', () => { lsSet('mirror-cloud.key', els.key.value.trim()); render(); });
   els.model.addEventListener('change', () => lsSet('mirror-cloud.model', els.model.value));
-  els.topic.value = lsGet('mirror.topic') || '';
-  els.topic.addEventListener('input', () => { lsSet('mirror.topic', els.topic.value); if (S) S.topic = els.topic.value.trim(); });
+  els.topic.addEventListener('input', () => { S.topic = els.topic.value.trim(); S.topicBy = S.topic ? 'speaker' : null; dirty(); });
   els.debug.addEventListener('toggle', render);
 
   newSession('live');

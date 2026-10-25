@@ -30,3 +30,17 @@ The user supplies the OpenRouter key in the page; it lives only in their browser
 - Discuss and get approval before changing direction or architecture; small fixes the user asked for can go straight ahead.
 - Check the data before theorizing: analyse the session JSON before proposing fixes.
 - Keep the app single-file with no build step; load any library from a pinned CDN version.
+
+## How to report back
+
+I skim your replies. Write for someone who wants to act, not to be taught.
+
+- Lead with the outcome in one or two sentences: what changed, and whether it works.
+- Then only what needs my attention: decisions I should make, risks, things you
+  couldn't verify, anything surprising or different from what I asked.
+- Don't narrate your steps, restate my request, or explain code I can read in the diff.
+- Don't list every file touched unless I ask.
+- Default to under ~150 words. Go longer only when the content earns it:
+  a real trade-off, a bug with a non-obvious cause, or a design choice I need to weigh in on.
+- If there's more worth knowing, end with one line offering it ("Want the details on X?")
+  instead of including it.
